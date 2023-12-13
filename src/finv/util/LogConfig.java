@@ -8,10 +8,7 @@ public class LogConfig {
     private static boolean isConfigured = false;
 
     /**
-     * Configures the function.
-     *
-     * @param  None    There are no parameters for this function.
-     * @return None    This function does not return any values.
+     * Configures the logger.
      */
     public static synchronized void configure() {
         if (!isConfigured) {

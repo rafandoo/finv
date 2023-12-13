@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Objects;
 
 public class Finv {
-
     public static final String STOCKS_BASE_URL = System.getProperty("finv.query.v7", "https://query1.finance.yahoo.com/v7/finance/options/");
     public static final String STOCKS_QUERY_URL_V8 = System.getProperty("finv.query.v8", "https://query1.finance.yahoo.com/v8/finance/chart/");
 

@@ -38,7 +38,7 @@ public class StockQuoteData extends AbstractStockDataProvider {
     /**
      * The function returns an empty map of request parameters.
      * 
-     * @return An empty map of type `Map<String, String>` is being returned.
+     * @return An empty map of type `Map String, String` is being returned.
      */
     @Override
     protected Map<String, String> getRequestParameters() {
