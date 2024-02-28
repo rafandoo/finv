@@ -7,17 +7,29 @@ import finv.export.ExportType;
 import finv.provider.*;
 import finv.stats.Stats;
 import finv.stats.StockStats;
+import finv.util.DateFormatter;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * The FInv library (Finance Invest) is a software library that provides functions for
+ * financial analysis and investments in the Brazilian stock market, being a simple and
+ * powerful library that facilitates the development of investment applications, providing
+ * functions ready to consult, calculate and visualize financial indicators.
+ *
+ * @author Rafael Camargo
+ * @version 1.0.1
+ */
 public class Finv {
-    public static final String STOCKS_BASE_URL = System.getProperty("finv.query.v7", "https://query1.finance.yahoo.com/v7/finance/options/");
+    public static final String STOCKS_QUERY_URL_V7 = System.getProperty("finv.query.v7", "https://query1.finance.yahoo.com/v7/finance/options/");
     public static final String STOCKS_QUERY_URL_V8 = System.getProperty("finv.query.v8", "https://query1.finance.yahoo.com/v8/finance/chart/");
+    public static final String YAHOO_COOKIE = System.getProperty("finv.cookie", "https://fc.yahoo.com");
+    public static final String YAHOO_CRUMB = System.getProperty("finv.crumb", "https://query2.finance.yahoo.com/v1/test/getcrumb");
+    public static final String LOG_LEVEL = System.getProperty("finv.log.level", "INFO");
 
     /**
      * Retrieves a stock using the provided ticker symbol.
@@ -87,8 +99,8 @@ public class Finv {
     public static Stock get(String ticker, List<Event> events, Frequency frequency) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusMonths(12);
-        String startDateStr = formatDate(startDate);
-        String endDateStr = formatDate(endDate);
+        String startDateStr = DateFormatter.format(startDate);
+        String endDateStr = DateFormatter.format(endDate);
         return get(ticker, events, startDateStr, endDateStr, frequency);
     }
 
@@ -108,23 +120,23 @@ public class Finv {
     /**
      * Retrieves a stock object with the specified ticker symbol, along with additional events if provided.
      *
-     * @param ticker       the ticker symbol of the stock to retrieve
-     * @param events       a list of events to include in the stock object (e.g., history, dividends, split)
-     * @param startDateStr the start date of the events range in string format
-     * @param endDateStr   the end date of the events range in string format
-     * @param frequency    the frequency at which to retrieve the events (e.g., daily, weekly, monthly)
+     * @param ticker    the ticker symbol of the stock to retrieve
+     * @param events    a list of events to include in the stock object (e.g., history, dividends, split)
+     * @param startDate the start date of the events range in string format
+     * @param endDate   the end date of the events range in string format
+     * @param frequency the frequency at which to retrieve the events (e.g., daily, weekly, monthly)
      * @return the stock object with the specified ticker and events
      */
-    public static Stock get(String ticker, List<Event> events, String startDateStr, String endDateStr, Frequency frequency) {
+    public static Stock get(String ticker, List<Event> events, String startDate, String endDate, Frequency frequency) {
         Stock stockEvents = get(ticker);
         if (!Objects.requireNonNull(events).isEmpty()) {
             for (Event event : events) {
                 if (event == Event.HISTORY) {
-                    getHistory(stockEvents, startDateStr, endDateStr, frequency);
+                    getHistory(stockEvents, startDate, endDate, frequency);
                 } else if (event == Event.DIVIDENDS) {
-                    getDividends(stockEvents, startDateStr, endDateStr, frequency);
+                    getDividends(stockEvents, startDate, endDate, frequency);
                 } else if (event == Event.SPLIT) {
-                    getStockSplits(stockEvents, startDateStr, endDateStr, frequency);
+                    getStockSplits(stockEvents, startDate, endDate, frequency);
                 }
             }
         }
@@ -190,17 +202,6 @@ public class Finv {
     private static Stock getStock(String ticker) {
         StockDataProvider provider = new StockData(new Stock(ticker));
         return provider.fetchData();
-    }
-
-    /**
-     * Formats a given LocalDate object into a string representation using the "yyyy-MM-dd" format pattern.
-     *
-     * @param date the LocalDate object to be formatted
-     * @return the formatted string representation of the given LocalDate object
-     */
-    private static String formatDate(LocalDate date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        return date.format(formatter);
     }
 
     /**

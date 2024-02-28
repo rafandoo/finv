@@ -47,7 +47,6 @@ public class DividendYieldCalculator implements StatisticsCalculator {
             totalDividends += dividend.getAmount();
         }
 
-        // Assumindo que os dividendos são pagos regularmente durante o ano
         return totalDividends * (365.0 / stock.getQuote().getPreviousClose());
     }
 }

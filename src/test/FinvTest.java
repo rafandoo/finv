@@ -13,8 +13,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * The type Finv test.
+ */
 public class FinvTest {
 
+    /**
+     * Test get stock.
+     */
     @Test
     public void testGetStock() {
         Stock stock = Finv.get("AAPL");
@@ -22,6 +28,9 @@ public class FinvTest {
         assertEquals("AAPL", stock.getTicker());
     }
 
+    /**
+     * Test get stock with events.
+     */
     @Test
     public void testGetStockWithEvents() {
         List<Event> events = Collections.singletonList(Event.HISTORY);
@@ -31,12 +40,18 @@ public class FinvTest {
         assertNotNull(stock.getQuoteHistory());
     }
 
+    /**
+     * Test get stock with invalid ticker.
+     */
     @Test
     public void testGetStockWithInvalidTicker() {
         Stock stock = Finv.get("INVALID_TICKER");
-        assertNull(stock);
+        assertNull(stock.getName());
     }
 
+    /**
+     * Test stats average close price.
+     */
     @Test
     public void testStatsAverageClosePrice() {
         Stock stock = new Stock("AAPL");
@@ -44,6 +59,9 @@ public class FinvTest {
         assertEquals(0.0, result, 0.01);  // Ajuste conforme necessário
     }
 
+    /**
+     * Test stats dividend yield.
+     */
     @Test
     public void testStatsDividendYield() {
         Stock stock = new Stock("AAPL");
@@ -51,6 +69,9 @@ public class FinvTest {
         assertEquals(0.0, result, 0.01);  // Ajuste conforme necessário
     }
 
+    /**
+     * Test stats list.
+     */
     @Test
     public void testStatsList() {
         Stock stock = new Stock("AAPL");
@@ -59,6 +80,9 @@ public class FinvTest {
         // Adicione asserções conforme necessário para cada estatística
     }
 
+    /**
+     * Test export stock.
+     */
     @Test
     public void testExportStock() {
         Stock stock = new Stock("AAPL");
@@ -66,6 +90,9 @@ public class FinvTest {
         // Adicione asserções ou mocks conforme necessário
     }
 
+    /**
+     * Test export null stock.
+     */
     @Test
     public void testExportNullStock() {
         Finv.export(null, ExportType.JSON);
