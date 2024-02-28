@@ -1,5 +1,7 @@
 package finv.util;
 
+import finv.Finv;
+
 import java.io.IOException;
 import java.util.logging.*;
 
@@ -17,7 +19,7 @@ public class LogConfig {
             }
 
             try {
-                FileHandler fileHandler = new FileHandler("application.log", true);
+                FileHandler fileHandler = new FileHandler("finv.log", true);
                 fileHandler.setFormatter(new SimpleFormatter());
                 logger.addHandler(fileHandler);
 
@@ -28,10 +30,10 @@ public class LogConfig {
                     }
                 }
 
-                logger.setLevel(Level.INFO);
+                logger.setLevel(Level.parse(Finv.LOG_LEVEL));
 
                 isConfigured = true;
-            } catch (IOException e) {
+            } catch (IOException | SecurityException e) {
                 e.printStackTrace();
             }
         }
