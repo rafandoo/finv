@@ -3,11 +3,13 @@ package finv.provider;
 import finv.Finv;
 import finv.Stock;
 import finv.data.StockQuote;
+import finv.util.CrumbYahoo;
 import finv.util.LogConfig;
 import org.json.JSONObject;
 
 import java.net.URLEncoder;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -28,9 +30,9 @@ public class StockQuoteData extends AbstractStockDataProvider {
     @Override
     protected String getApiUrl() {
         try {
-            return Finv.STOCKS_BASE_URL + URLEncoder.encode(stock.getTicker(), "UTF-8");
+            return Finv.STOCKS_QUERY_URL_V7 + URLEncoder.encode(stock.getTicker(), "UTF-8");
         } catch (Exception e) {
-            logger.severe("Error building the API URL: " + e.getMessage());
+            logger.warning("Error building the API URL: " + e.getMessage());
             return null;
         }
     }
@@ -42,7 +44,14 @@ public class StockQuoteData extends AbstractStockDataProvider {
      */
     @Override
     protected Map<String, String> getRequestParameters() {
-        return Collections.emptyMap();
+        Map<String, String> params = new LinkedHashMap<>();
+        try {
+            params.put("crumb", CrumbYahoo.getCrumb());
+        } catch (Exception e) {
+            logger.warning("Error building the request parameters: " + e.getMessage());
+            return Collections.emptyMap();
+        }
+        return params;
     }
 
     /**
@@ -70,10 +79,10 @@ public class StockQuoteData extends AbstractStockDataProvider {
             stockQuote.setBid(quoteObject.getDouble("bid"));
             stockQuote.setAsk(quoteObject.getDouble("ask"));
 
+            logger.info("Parsed stock quote for " + stock.getTicker());
             stock.setQuote(stockQuote);
-
         } catch (Exception e) {
-            logger.severe("Error parsing the API response: " + e.getMessage());
+            logger.warning("Error parsing the API response: " + e.getMessage());
         }
     }
 }

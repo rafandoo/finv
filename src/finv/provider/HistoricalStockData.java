@@ -20,7 +20,6 @@ public class HistoricalStockData extends AbstractStockDataProvider {
     private final String endDate;
     private final Frequency frequency;
 
-
     public HistoricalStockData(Stock stock, String startDate, String endDate, Frequency frequency) {
         super(stock);
         this.startDate = startDate;
@@ -38,10 +37,15 @@ public class HistoricalStockData extends AbstractStockDataProvider {
     @Override
     protected Map<String, String> getRequestParameters() {
         Map<String, String> params = new LinkedHashMap<>();
-        params.put("period1", DateFormatter.timestampFormat(DateFormatter.parse(startDate)));
-        params.put("period2", DateFormatter.timestampFormat(DateFormatter.parse(endDate)));
-        params.put("interval", frequency.getName());
-        params.put("includeAdjustedClose", "true");
+        try {
+            params.put("period1", DateFormatter.timestampFormat(DateFormatter.parse(startDate)));
+            params.put("period2", DateFormatter.timestampFormat(DateFormatter.parse(endDate)));
+            params.put("interval", frequency.getName());
+            params.put("includeAdjustedClose", "true");
+        } catch (Exception e) {
+            logger.warning("Error building the request parameters: " + e.getMessage());
+            return Collections.emptyMap();
+        }
         return params;
     }
 
@@ -56,7 +60,7 @@ public class HistoricalStockData extends AbstractStockDataProvider {
         try {
             return Finv.STOCKS_QUERY_URL_V8 + URLEncoder.encode(stock.getTicker(), "UTF-8");
         } catch (Exception e) {
-            logger.severe("Error building the API URL: " + e.getMessage());
+            logger.warning("Error building the API URL: " + e.getMessage());
             return null;
         }
     }
@@ -97,9 +101,10 @@ public class HistoricalStockData extends AbstractStockDataProvider {
                 historicalQuote.setVolume(volumeArray.getLong(i));
                 historicalQuotes.add(historicalQuote);
             }
+            logger.info("Historical stock quotes fetched successfully for " + stock.getTicker());
             stock.setQuoteHistory(historicalQuotes);
         } catch (Exception e) {
-            logger.severe("Error parsing the API response: " + e.getMessage());
+            logger.warning("Error parsing the API response: " + e.getMessage());
         }
     }
 }

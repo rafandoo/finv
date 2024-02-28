@@ -1,10 +1,13 @@
 package finv.provider;
 
 import finv.Stock;
+import finv.util.CrumbYahoo;
 import finv.util.LogConfig;
 import finv.util.RequestHttp;
 import finv.util.UrlBuilder;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -30,15 +33,22 @@ public abstract class AbstractStockDataProvider implements StockDataProvider {
                     .addParameter(getRequestParameters())
                     .build();
 
+            logger.info("Fetching stock data from the API: " + url);
+            Map<String, String> headers = new HashMap<String, String>() {{
+                put("Cookie", CrumbYahoo.getCookie());
+                put("Content-Type", "application/json");
+                put("Accept", "*/*");
+                put("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+            }};
             StringBuilder response = RequestHttp.fromURL(url)
                     .method("GET")
-                    .contentType("application/json")
+                    .headers(headers)
                     .get();
 
             parseApiResponse(response.toString());
             return stock;
         } catch (Exception e) {
-            logger.severe("Error fetching stock data from the API: " + e.getMessage());
+            logger.warning("Error fetching stock data: " + e.getMessage());
             return null;
         }
     }

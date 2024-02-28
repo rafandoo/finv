@@ -20,7 +20,6 @@ public class StockDividendData extends AbstractStockDataProvider {
     private final String endDate;
     private final Frequency frequency;
 
-
     public StockDividendData(Stock stock, String startDate, String endDate, Frequency frequency) {
         super(stock);
         this.startDate = startDate;
@@ -39,11 +38,16 @@ public class StockDividendData extends AbstractStockDataProvider {
     @Override
     protected Map<String, String> getRequestParameters() {
         Map<String, String> params = new LinkedHashMap<>();
-        params.put("period1", DateFormatter.timestampFormat(DateFormatter.parse(startDate)));
-        params.put("period2", DateFormatter.timestampFormat(DateFormatter.parse(endDate)));
-        params.put("interval", frequency.getName());
-        params.put("events", Event.DIVIDENDS.getName());
-        params.put("includeAdjustedClose", "true");
+        try {
+            params.put("period1", DateFormatter.timestampFormat(DateFormatter.parse(startDate)));
+            params.put("period2", DateFormatter.timestampFormat(DateFormatter.parse(endDate)));
+            params.put("interval", frequency.getName());
+            params.put("events", Event.DIVIDENDS.getName());
+            params.put("includeAdjustedClose", "true");
+        } catch (Exception e) {
+            logger.warning("Error building the request parameters: " + e.getMessage());
+            return Collections.emptyMap();
+        }
         return params;
     }
 
@@ -58,7 +62,7 @@ public class StockDividendData extends AbstractStockDataProvider {
         try {
             return Finv.STOCKS_QUERY_URL_V8 + URLEncoder.encode(stock.getTicker(), "UTF-8");
         } catch (Exception e) {
-            logger.severe("Error building the API URL: " + e.getMessage());
+            logger.warning("Error building the API URL: " + e.getMessage());
             return null;
         }
     }
@@ -93,10 +97,10 @@ public class StockDividendData extends AbstractStockDataProvider {
                     dividends.add(dividend);
                 }
             }
-
+            logger.info("Dividend data fetched successfully for " + stock.getTicker());
             stock.setDividendHistory(dividends);
         } catch (Exception e) {
-            logger.severe("Error parsing the API response: " + e.getMessage());
+            logger.warning("Error parsing the API response: " + e.getMessage());
         }
     }
 }

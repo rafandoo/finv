@@ -20,7 +20,6 @@ public class StockSplitData extends AbstractStockDataProvider {
     private final String endDate;
     private final Frequency frequency;
 
-
     public StockSplitData(Stock stock, String startDate, String endDate, Frequency frequency) {
         super(stock);
         this.startDate = startDate;
@@ -38,11 +37,16 @@ public class StockSplitData extends AbstractStockDataProvider {
     @Override
     protected Map<String, String> getRequestParameters() {
         Map<String, String> params = new LinkedHashMap<>();
-        params.put("period1", DateFormatter.timestampFormat(DateFormatter.parse(startDate)));
-        params.put("period2", DateFormatter.timestampFormat(DateFormatter.parse(endDate)));
-        params.put("interval", frequency.getName());
-        params.put("events", Event.SPLIT.getName());
-        params.put("includeAdjustedClose", "true");
+        try {
+            params.put("period1", DateFormatter.timestampFormat(DateFormatter.parse(startDate)));
+            params.put("period2", DateFormatter.timestampFormat(DateFormatter.parse(endDate)));
+            params.put("interval", frequency.getName());
+            params.put("events", Event.SPLIT.getName());
+            params.put("includeAdjustedClose", "true");
+        } catch (Exception e) {
+            logger.warning("Error building the request parameters: " + e.getMessage());
+            return Collections.emptyMap();
+        }
         return params;
     }
 
@@ -57,7 +61,7 @@ public class StockSplitData extends AbstractStockDataProvider {
         try {
             return Finv.STOCKS_QUERY_URL_V8 + URLEncoder.encode(stock.getTicker(), "UTF-8");
         } catch (Exception e) {
-            logger.severe("Error building the API URL: " + e.getMessage());
+            logger.warning("Error building the API URL: " + e.getMessage());
             return null;
         }
     }
@@ -79,7 +83,6 @@ public class StockSplitData extends AbstractStockDataProvider {
             JSONObject resultObject = chartObject.getJSONArray("result").getJSONObject(0);
             JSONObject indicatorsObject = resultObject.getJSONObject("events");
 
-            // Assuming "dividends" is the key for dividend events
             if (indicatorsObject.has("splits")) {
                 JSONObject dividendsObject = indicatorsObject.getJSONObject("splits");
 
@@ -87,16 +90,16 @@ public class StockSplitData extends AbstractStockDataProvider {
                     JSONObject dividendInfo = dividendsObject.getJSONObject(timestamp);
 
                     String splitRatio = dividendInfo.getString("splitRatio");
-                    Date date = new Date(Long.parseLong(timestamp) * 1000); // Convert timestamp to milliseconds
+                    Date date = new Date(Long.parseLong(timestamp) * 1000);
 
                     StockSplit split = new StockSplit(splitRatio, date);
                     splits.add(split);
                 }
             }
-
+            logger.info("Stock split data fetched successfully for " + stock.getTicker());
             stock.setSplitHistory(splits);
         } catch (Exception e) {
-            logger.severe("Error parsing the API response: " + e.getMessage());
+            logger.warning("Error parsing the API response: " + e.getMessage());
         }
     }
 }
