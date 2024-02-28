@@ -26,19 +26,16 @@ public class ExportData {
 
     /**
      * The function exports stock data using a specified export strategy.
-     * 
-     * @param stock The `stock` parameter is an instance of the `Stock` class, which represents the data
-     * that needs to be exported. It likely contains information about various stocks, such as their names,
-     * prices, and quantities.
-     * @param exportType The `exportType` parameter is an instance of the `ExportType` enum. It represents
-     * the type of export strategy to be used for exporting the `Stock` data.
+     *
+     * @param stock      The `stock` parameter is an instance of the `Stock` class, which represents the data that needs to be exported. It likely contains information about various stocks, such as their names, prices, and quantities.
+     * @param exportType The `exportType` parameter is an instance of the `ExportType` enum. It represents the type of export strategy to be used for exporting the `Stock` data.
      */
     public void export(Stock stock, ExportType exportType) {
         try {
             exportStrategy = exportType.getStrategyClass().newInstance();
             exportStrategy.export(stock);
         } catch (Exception e) {
-            logger.severe("Error exporting data: " + e.getMessage());
+            logger.warning("Error exporting data: " + e.getMessage());
         }
     }
 }

@@ -4,15 +4,19 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
+import java.util.logging.Logger;
 
 public class RequestHttp {
 
     private final URL url;
     private String method;
-    private String contentType;
+    private Map<String, String> headers;
+    private static final Logger logger = LogConfig.getLogger();
 
     private RequestHttp(URL url) {
         this.url = url;
+        LogConfig.configure();
     }
 
     /**
@@ -26,7 +30,8 @@ public class RequestHttp {
             URL url = new URL(urlString);
             return new RequestHttp(url);
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao criar a instância da classe RequestHttp", e);
+            logger.warning("Error creating instance of RequestHttp class: " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -44,11 +49,11 @@ public class RequestHttp {
     /**
      * Sets the content type of the HTTP request.
      *
-     * @param contentType the content type to set
+     * @param headers the content type to set
      * @return the updated RequestHttp object
      */
-    public RequestHttp contentType(String contentType) {
-        this.contentType = contentType;
+    public RequestHttp headers(Map<String, String> headers) {
+        this.headers = headers;
         return this;
     }
 
@@ -65,8 +70,10 @@ public class RequestHttp {
                 connection.setRequestMethod(method);
             }
 
-            if (contentType != null && !contentType.isEmpty()) {
-                connection.setRequestProperty("Content-Type", contentType);
+            if (headers != null && !headers.isEmpty()) {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    connection.setRequestProperty(entry.getKey(), entry.getValue());
+                }
             }
 
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -80,11 +87,12 @@ public class RequestHttp {
                 reader.close();
                 return response;
             } else {
-                System.err.println("Erro na requisição: " + connection.getResponseCode());
+                logger.warning("Failed to retrieve data from URL: " + url);
+                logger.warning("Response code: " + connection.getResponseCode());
             }
             connection.disconnect();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warning("Error retrieving data from URL: " + e.getMessage());
         }
         return null;
     }

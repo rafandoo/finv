@@ -1,13 +1,17 @@
 package finv.util;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class UrlBuilder {
 
+    private static final Logger logger = LogConfig.getLogger();
     private final StringBuilder url;
 
     private UrlBuilder(String url) {
+        LogConfig.configure();
         this.url = new StringBuilder(url);
     }
 
@@ -40,8 +44,9 @@ public class UrlBuilder {
             try {
                 key = URLEncoder.encode(key, "UTF-8");
                 value = URLEncoder.encode(value, "UTF-8");
-            } catch (Exception e) {
-                throw new RuntimeException("Erro ao codificar parâmetros da URL", e);
+            } catch (UnsupportedEncodingException e) {
+                logger.warning("Failed to encode parameter: " + key + ", value: " + value + ", error: " + e.getMessage());
+                continue;
             }
             url.append(String.format("%s=%s", key, value));
         }

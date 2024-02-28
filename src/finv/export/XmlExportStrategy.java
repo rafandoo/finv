@@ -11,7 +11,7 @@ public class XmlExportStrategy implements ExportStrategy {
 
     private static final Logger logger = LogConfig.getLogger();
 
-    public XmlExportStrategy() {
+    private XmlExportStrategy() {
         LogConfig.configure();
     }
 
@@ -29,11 +29,10 @@ public class XmlExportStrategy implements ExportStrategy {
 
             try (FileWriter file = new FileWriter(fileName)) {
                 file.write(xml);
-                System.out.println("Successfully Copied XML Object to File...");
-                System.out.println("\nXML Object: " + xml);
+                logger.info("Successfully created XML file...");
             }
         } catch (Exception e) {
-            logger.severe("Error exporting data: " + e.getMessage());
+            logger.warning("Error exporting data: " + e.getMessage());
         }
     }
 }

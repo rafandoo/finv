@@ -11,7 +11,7 @@ public class JsonExportStrategy implements ExportStrategy {
 
     private static final Logger logger = LogConfig.getLogger();
 
-    public JsonExportStrategy() {
+    private JsonExportStrategy() {
         LogConfig.configure();
     }
 
@@ -29,11 +29,10 @@ public class JsonExportStrategy implements ExportStrategy {
 
             try (FileWriter file = new FileWriter(fileName)) {
                 file.write(json);
-                System.out.println("Successfully Copied JSON Object to File...");
-                System.out.println("\nJSON Object: " + json);
+                logger.info("Successfully created JSON file...");
             }
         } catch (Exception e) {
-            logger.severe("Error exporting data: " + e.getMessage());
+            logger.warning("Error exporting data: " + e.getMessage());
         }
     }
 }
