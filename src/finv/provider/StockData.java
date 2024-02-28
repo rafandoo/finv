@@ -2,12 +2,14 @@ package finv.provider;
 
 import finv.Finv;
 import finv.Stock;
+import finv.util.CrumbYahoo;
 import finv.util.LogConfig;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -29,9 +31,9 @@ public class StockData extends AbstractStockDataProvider {
     @Override
     protected String getApiUrl() {
         try {
-            return Finv.STOCKS_BASE_URL + URLEncoder.encode(stock.getTicker(), "UTF-8");
+            return Finv.STOCKS_QUERY_URL_V7 + URLEncoder.encode(stock.getTicker(), "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            logger.severe("Error building the API URL: " + e.getMessage());
+            logger.warning("Error building the API URL: " + e.getMessage());
             return null;
         }
     }
@@ -43,7 +45,14 @@ public class StockData extends AbstractStockDataProvider {
      */
     @Override
     protected Map<String, String> getRequestParameters() {
-        return Collections.emptyMap();
+       Map<String, String> params = new LinkedHashMap<>();
+       try {
+           params.put("crumb", CrumbYahoo.getCrumb());
+       } catch (Exception e) {
+           logger.warning("Error building the request parameters: " + e.getMessage());
+           return Collections.emptyMap();
+       }
+       return params;
     }
 
     /**
@@ -64,9 +73,10 @@ public class StockData extends AbstractStockDataProvider {
             stock.setName(quoteObject.getString("longName"));
             stock.setStockExchange(quoteObject.getString("fullExchangeName"));
             stock.setQuoteType(quoteObject.getString("quoteType"));
-
+            logger.info("Stock data fetched successfully for " + stock.getTicker());
         } catch (Exception e) {
-            logger.severe("Error parsing the API response: " + e.getMessage());
+            logger.warning("Error parsing the API response: " + e.getMessage());
+            logger.warning("May be the stock ticker is invalid: " + stock.getTicker() + ", please check the stock ticker and try again.");
         }
     }
 }
