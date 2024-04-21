@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * The type Finv test.
  */
-public class FinvTest {
+class FinvTest {
 
     /**
      * Test get stock.
