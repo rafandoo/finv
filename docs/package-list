@@ -1,7 +1,7 @@
-finv
-finv.data
-finv.export
-finv.provider
-finv.stats
-finv.util
-test
+br.dev.rplus.finv
+br.dev.rplus.finv.config
+br.dev.rplus.finv.data
+br.dev.rplus.finv.export
+br.dev.rplus.finv.provider
+br.dev.rplus.finv.stats
+br.dev.rplus.finv.util
