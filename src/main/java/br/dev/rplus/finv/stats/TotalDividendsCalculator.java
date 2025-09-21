@@ -3,22 +3,30 @@ package br.dev.rplus.finv.stats;
 import br.dev.rplus.finv.Stock;
 import br.dev.rplus.finv.data.StockDividend;
 
+/**
+ * The TotalDividendsCalculator class calculates the sum of all dividend amounts for a given stock.
+ * <p>
+ * This class is used to calculate the total amount of dividends paid by a stock over its history.
+ * It sums the dividend amounts from the stock's dividend history.
+ * </p>
+ */
 public class TotalDividendsCalculator implements StatisticsCalculator {
 
     /**
-     * Calculates the sum of all dividend amounts for a given stock.
-     *
-     * @param  stock  the stock object for which the dividend sum is calculated
-     * @return        the sum of all dividend amounts for the given stock,
-     *                or 0 if the dividend history is null or empty
+     * The default constructor.
+     * <p>
+     * Initializes a new instance of {@link TotalDividendsCalculator}.
+     * </p>
      */
+    public TotalDividendsCalculator() {}
+
     @Override
     public double calculate(Stock stock) {
         if (stock.getDividendHistory() == null || stock.getDividendHistory().isEmpty()) {
             return 0;
         }
         return stock.getDividendHistory().stream()
-                .mapToDouble(StockDividend::getAmount)
-                .sum();
+            .mapToDouble(StockDividend::amount)
+            .sum();
     }
 }

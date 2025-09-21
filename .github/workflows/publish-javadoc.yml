@@ -1,0 +1,53 @@
+name: Publish Javadoc to GitHub Pages
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  build-javadoc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-env
+
+      - name: Build project and generate Javadoc
+        run: |
+          ./gradlew clean javadoc
+
+      - name: Upload Javadoc
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: 'build/docs/javadoc'
+
+  deploy-javadoc:
+    name: Deploy
+    needs: build-javadoc
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

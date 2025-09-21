@@ -1,101 +1,69 @@
 package br.dev.rplus.finv.provider;
 
-import br.dev.rplus.cup.log.LoggerCup;
-import br.dev.rplus.finv.Stock;
-import br.dev.rplus.finv.config.Paramters;
-import br.dev.rplus.finv.data.Event;
-import br.dev.rplus.finv.data.Frequency;
+import br.dev.rplus.cup.log.Logger;
 import br.dev.rplus.finv.data.StockSplit;
-import br.dev.rplus.cup.others.DateFormatter;
+import br.dev.rplus.cup.utils.DateUtils;
 import org.json.JSONObject;
 
-import java.net.URLEncoder;
 import java.util.*;
 
-public class StockSplitData extends AbstractStockDataProvider {
-    private final String startDate;
-    private final String endDate;
-    private final Frequency frequency;
+/**
+ * Singleton class responsible for fetching and parsing stock split data from the API.
+ * <p>
+ * This class implements the {@link EventParse} interface to transform the API response into a list of {@link StockSplit} objects.
+ * It extracts stock split events, including the split ratio and the corresponding date, from the response JSON.
+ */
+public class StockSplitData implements EventParse<StockSplit> {
 
-    public StockSplitData(Stock stock, String startDate, String endDate, Frequency frequency) {
-        super(stock);
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.frequency = frequency;
-    }
+    private static StockSplitData instance;
+    private final Logger logger = Logger.getInstance();
 
     /**
-     * The function returns a map of request parameters for a Java program, including start and end
-     * dates, frequency, event type, and a flag for including adjusted close prices.
-     * 
-     * @return The method is returning a Map object with String keys and String values.
+     * Private constructor to enforce singleton pattern.
      */
-    @Override
-    protected Map<String, String> getRequestParameters() {
-        Map<String, String> params = new LinkedHashMap<>();
-        try {
-            params.put("period1", DateFormatter.timestampFormat(DateFormatter.parse(startDate)));
-            params.put("period2", DateFormatter.timestampFormat(DateFormatter.parse(endDate)));
-            params.put("interval", frequency.getName());
-            params.put("events", Event.SPLIT.getName());
-            params.put("includeAdjustedClose", "true");
-        } catch (Exception e) {
-            LoggerCup.warn("Error building the request parameters.", e);
-            return Collections.emptyMap();
+    private StockSplitData() {}
+
+    /**
+     * Returns the singleton instance of {@code StockSplitData}.
+     *
+     * @return the singleton instance of {@code StockSplitData}.
+     */
+    public static StockSplitData getInstance() {
+        if (instance == null) {
+            instance = new StockSplitData();
         }
-        return params;
+        return instance;
     }
 
-    /**
-     * The function returns the API URL for querying stock information, with the stock ticker encoded
-     * in the URL.
-     * 
-     * @return The method is returning a string value.
-     */
     @Override
-    protected String getApiUrl() {
-        try {
-            return Paramters.STOCKS_QUERY_URL_V8 + URLEncoder.encode(stock.getTicker(), "UTF-8");
-        } catch (Exception e) {
-            LoggerCup.warn("Error building the API URL.", e);
-            return null;
-        }
-    }
-
-    /**
-     * The function parses an API response to extract stock split information and sets it in a Stock
-     * object.
-     * 
-     * @param response The response parameter is a string that represents the API response received
-     * from a server.
-     */
-    @Override
-    protected void parseApiResponse(String response) {
+    public List<StockSplit> parse(String response) {
         List<StockSplit> splits = new ArrayList<>();
+        JSONObject oResponse = null;
 
         try {
-            JSONObject jsonResponse = new JSONObject(response);
-            JSONObject chartObject = jsonResponse.getJSONObject("chart");
-            JSONObject resultObject = chartObject.getJSONArray("result").getJSONObject(0);
-            JSONObject indicatorsObject = resultObject.getJSONObject("events");
+            oResponse = new JSONObject(response)
+                .getJSONObject("chart")
+                .getJSONArray("result")
+                .getJSONObject(0);
 
-            if (indicatorsObject.has("splits")) {
-                JSONObject dividendsObject = indicatorsObject.getJSONObject("splits");
+            if (oResponse.has("events") && oResponse.getJSONObject("events").has("splits")) {
+                JSONObject oSplits = oResponse.getJSONObject("events").getJSONObject("splits");
 
-                for (String timestamp : dividendsObject.keySet()) {
-                    JSONObject dividendInfo = dividendsObject.getJSONObject(timestamp);
+                for (String timestamp : oSplits.keySet()) {
+                    JSONObject splitInfo = oSplits.getJSONObject(timestamp);
 
-                    String splitRatio = dividendInfo.getString("splitRatio");
-                    Date date = new Date(Long.parseLong(timestamp) * 1000);
+                    String splitRatio = splitInfo.getString("splitRatio");
+                    Date date = DateUtils.fromTimestamp(timestamp);
 
-                    StockSplit split = new StockSplit(splitRatio, date);
-                    splits.add(split);
+                    splits.add(new StockSplit(splitRatio, date));
                 }
             }
-            LoggerCup.info("Parsed stock quote for %s.", stock.getTicker());
-            stock.setSplitHistory(splits);
+            this.logger.info("Stock split data parsed successfully.");
         } catch (Exception e) {
-            LoggerCup.warn("Error parsing the API response.", e);
+            this.logger.warn("Error parsing the API response.", e);
+        } finally {
+            if (oResponse != null) oResponse.clear();
         }
+        return splits;
     }
 }

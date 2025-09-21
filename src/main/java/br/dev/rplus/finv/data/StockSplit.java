@@ -2,39 +2,24 @@ package br.dev.rplus.finv.data;
 
 import java.util.Date;
 
-public class StockSplit {
-    private String splitRatio;
-    private Date date;
-
-    public StockSplit() {
-    }
-
-    public StockSplit(String splitRatio, Date date) {
-        this.splitRatio = splitRatio;
-        this.date = date;
-    }
-
-    public String getSplitRatio() {
-        return splitRatio;
-    }
-
-    public void setSplitRatio(String splitRatio) {
-        this.splitRatio = splitRatio;
-    }
-
-    public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
-    }
+/**
+ * StockSplit is a class that represents a stock split event.
+ * A stock split is a corporate action that divides the existing shares of a company into multiple shares.
+ * This is done to increase the liquidity of the shares and make them more affordable to investors.
+ *
+ * @param splitRatio the ratio of the split.
+ * @param date the date of the split.
+ */
+public record StockSplit(
+        String splitRatio,
+        Date date
+) {
 
     @Override
     public String toString() {
-        return "{" +
-                "splitRatio=" + splitRatio +
-                ", date=" + date +
-                "}";
+        return "StockSplit: {" +
+                "splitRatio: '" + splitRatio + '\'' +
+                ", date: " + date +
+                '}';
     }
 }

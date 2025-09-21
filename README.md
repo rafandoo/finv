@@ -12,7 +12,7 @@ A biblioteca FInv (Finance Invest) é uma biblioteca de software que provê fun�
 ## 👨‍💻 Tecnologias
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Logo Java"/>
 </p>
 
 
@@ -21,23 +21,29 @@ A biblioteca FInv (Finance Invest) é uma biblioteca de software que provê fun�
 Execute the command below to run the project in your shell.
 
 ```java
-// Exemplo 1: Obtendo informações básicas de uma ação (stock)
-Stock stock1 = Finv.get("INTC");
-stock1.print();
+public class Main {
 
-// Exemplo 2: Obtendo informações específicas de uma ação com eventos de dividendos no período de 2020
-Stock stock2 = Finv.get("AAPL", Event.DIVIDENDS, "2020-01-01", "2020-12-31");
-stock2.print();
-System.out.println("Dividend Yield: " + Finv.stats(stock2, Stats.DIVIDEND_YIELD));
+    public static void main(String[] args) {
+        // Exemplo 1: Obtendo informações básicas de uma ação (stock)
+        Stock stock1 = Finv.get("INTC");
+        stock1.print();
 
-// Exemplo 3: Obtendo informações detalhadas de uma ação com eventos variados, no período de 2020, com frequência mensal
-List<Event> events = new ArrayList<>();
-events.add(Event.DIVIDENDS);
-events.add(Event.SPLIT);
-events.add(Event.HISTORY);
+        // Exemplo 2: Obtendo informações específicas de uma ação com eventos de dividendos no período de 2020
+        Stock stock2 = Finv.get("AAPL", Event.DIVIDENDS, "2020-01-01", "2020-12-31");
+        stock2.print();
+        System.out.println("Dividend Yield: " + Finv.stats(stock2, Stats.DIVIDEND_YIELD));
 
-Stock stock3 = Finv.get("AAPL", events, "2020-01-01", "2020-12-31", Frequency.MONTHLY);
-stock3.print();
+        // Exemplo 3: Obtendo informações detalhadas de uma ação com eventos variados, no período de 2020, com frequência mensal
+        List<Event> events = new ArrayList<>();
+        events.add(Event.DIVIDENDS);
+        events.add(Event.SPLIT);
+        events.add(Event.HISTORY);
+
+        Stock stock3 = Finv.get("AAPL", events, "2020-01-01", "2020-12-31", Frequency.MONTHLY);
+        stock3.print();
+    }
+}
+
 ```
 
 ## 📄 Documentos 

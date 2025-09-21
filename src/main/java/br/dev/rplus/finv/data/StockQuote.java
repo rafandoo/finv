@@ -1,84 +1,48 @@
 package br.dev.rplus.finv.data;
 
-public class StockQuote {
-    private double price;
-    private double change;
-    private double open;
-    private double previousClose;
-    private Long volume;
-    private double bid;
-    private double ask;
+import java.util.Date;
 
-    public StockQuote() {
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public double getChange() {
-        return change;
-    }
-
-    public void setChange(double change) {
-        this.change = change;
-    }
-
-    public double getOpen() {
-        return open;
-    }
-
-    public void setOpen(double open) {
-        this.open = open;
-    }
-
-    public double getPreviousClose() {
-        return previousClose;
-    }
-
-    public void setPreviousClose(double previousClose) {
-        this.previousClose = previousClose;
-    }
-
-    public Long getVolume() {
-        return volume;
-    }
-
-    public void setVolume(Long volume) {
-        this.volume = volume;
-    }
-
-    public double getBid() {
-        return bid;
-    }
-
-    public void setBid(double bid) {
-        this.bid = bid;
-    }
-
-    public double getAsk() {
-        return ask;
-    }
-
-    public void setAsk(double ask) {
-        this.ask = ask;
-    }
-
+/**
+ * StockQuote is a class that represents a stock quote.
+ * A stock quote is a snapshot of a stock's price and other relevant information at a specific point in time.
+ *
+ * @param marketTime the market time of the quote.
+ * @param price the current price of the stock.
+ * @param change the change in price since the previous quote.
+ * @param open the opening price of the day.
+ * @param previousClose the previous closing price of the day.
+ * @param low the lowest price of the day.
+ * @param high the highest price of the day.
+ * @param volume the volume of the day.
+ * @param bid the bid price of the stock.
+ * @param ask the ask price of the stock.
+ */
+public record StockQuote(
+        Date marketTime,
+        double price,
+        double change,
+        double open,
+        double previousClose,
+        double low,
+        double high,
+        Long volume,
+        double bid,
+        double ask
+) {
 
     @Override
     public String toString() {
-        return "["
-                + "Price: " + price
-                + ", Bid: " + bid
-                + ", Ask: " + ask
-                + ", Change: " + change
-                + ", Open: " + open
-                + ", Previous Close: " + previousClose
-                + ", Volume: " + volume
-                + "]";
+        return "StockQuote: {" +
+                "marketTime: " + marketTime +
+                ", price: " + price +
+                ", change: " + change +
+                ", open: " + open +
+                ", previousClose: " + previousClose +
+                ", low: " + low +
+                ", high: " + high +
+                ", volume: " + volume +
+                ", bid: " + bid +
+                ", ask: " + ask +
+                '}';
     }
 }

@@ -2,94 +2,38 @@ package br.dev.rplus.finv.data;
 
 import java.util.Date;
 
-public class StockHistoricalQuote {
-    private Date date;
-    private double open;
-    private double low;
-    private double close;
-    private Long volume;
-    private double high;
-    private double adjClose;
-
-    public StockHistoricalQuote() {
-    }
-
-    public StockHistoricalQuote(Date date, double open, double low, double close, Long volume, double high, double adjClose) {
-        this.date = date;
-        this.open = open;
-        this.low = low;
-        this.close = close;
-        this.volume = volume;
-        this.high = high;
-        this.adjClose = adjClose;
-    }
-
-    public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
-    public double getOpen() {
-        return open;
-    }
-
-    public void setOpen(double open) {
-        this.open = open;
-    }
-
-    public double getLow() {
-        return low;
-    }
-
-    public void setLow(double low) {
-        this.low = low;
-    }
-
-    public double getClose() {
-        return close;
-    }
-
-    public void setClose(double close) {
-        this.close = close;
-    }
-
-    public Long getVolume() {
-        return volume;
-    }
-
-    public void setVolume(Long volume) {
-        this.volume = volume;
-    }
-
-    public double getHigh() {
-        return high;
-    }
-
-    public void setHigh(double high) {
-        this.high = high;
-    }
-
-    public double getAdjClose() {
-        return adjClose;
-    }
-
-    public void setAdjClose(double adjClose) {
-        this.adjClose = adjClose;
-    }
+/**
+ * StockHistoricalQuote is a class that represents a historical stock quote.
+ * A historical stock quote is a snapshot of a stock's price and other relevant information at a specific point in time in the past.
+ *
+ * @param date the date of the quote.
+ * @param open the opening price of the day.
+ * @param close the closing price of the day.
+ * @param adjClose the adjusted closing price of the day.
+ * @param low the lowest price of the day.
+ * @param high the highest price of the day.
+ * @param volume the volume of the day.
+ */
+public record StockHistoricalQuote(
+        Date date,
+        double open,
+        double close,
+        double adjClose,
+        double low,
+        double high,
+        Long volume
+) {
 
     @Override
     public String toString() {
-        return "{" +
-                "date=" + date +
-                ", open=" + open +
-                ", low=" + low +
-                ", close=" + close +
-                ", volume=" + volume +
-                ", high=" + high +
-                ", adjClose=" + adjClose +
-                "}";
+        return "StockHistoricalQuote: {" +
+                "date: " + date +
+                ", open: " + open +
+                ", close: " + close +
+                ", adjClose: " + adjClose +
+                ", low: " + low +
+                ", high: " + high +
+                ", volume: " + volume +
+                '}';
     }
 }

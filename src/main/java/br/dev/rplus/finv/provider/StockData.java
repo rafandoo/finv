@@ -1,78 +1,91 @@
 package br.dev.rplus.finv.provider;
 
-import br.dev.rplus.cup.log.LoggerCup;
+import br.dev.rplus.cup.utils.DateUtils;
+import br.dev.rplus.cup.utils.Parser;
 import br.dev.rplus.finv.Stock;
-import br.dev.rplus.finv.config.Paramters;
-import br.dev.rplus.finv.util.CrumbYahoo;
+import br.dev.rplus.finv.data.StockQuote;
+import br.dev.rplus.finv.enums.RequestParams;
+import br.dev.rplus.finv.provider.yahoo.CrumbYahoo;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Class responsible for fetching and parsing detailed stock information from the API.
+ * <p>
+ * This class retrieves essential information about a stock, including its name, currency, market details, and current quote.
+ * It extends the {@link AbstractStockDataProvider} and overrides methods to define request parameters, construct the API URL,
+ * and parse the API response into a {@link Stock} object with an associated {@link StockQuote}.
+ */
 public class StockData extends AbstractStockDataProvider {
 
+    /**
+     * Constructs a new {@code StockData} instance for the specified {@link Stock}.
+     *
+     * @param stock The stock for which data will be fetched.
+     */
     public StockData(Stock stock) {
         super(stock);
     }
 
-
-    /**
-     * The function returns the API URL for a given stock ticker, encoded in UTF-8.
-     * 
-     * @return The method is returning a string value.
-     */
     @Override
     protected String getApiUrl() {
-        try {
-            return Paramters.STOCKS_QUERY_URL_V7 + URLEncoder.encode(stock.getTicker(), "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            LoggerCup.warn("Error building the API URL.", e);
-            return null;
-        }
+        return prepareUrl(RequestParams.STOCKS_QUERY_URL_V7.get().asString());
     }
 
-    /**
-     * The function returns an empty map of request parameters.
-     * 
-     * @return An empty map of type `Map String, String` is being returned.
-     */
     @Override
     protected Map<String, String> getRequestParameters() {
-       Map<String, String> params = new LinkedHashMap<>();
-       try {
-           params.put("crumb", CrumbYahoo.getCrumb());
-       } catch (Exception e) {
-           LoggerCup.warn("Error building the request parameters.", e);
-           return Collections.emptyMap();
-       }
-       return params;
+        Map<String, String> params = new LinkedHashMap<>();
+        try {
+            params.put("crumb", CrumbYahoo.getCrumb());
+        } catch (Exception e) {
+            logger.warn("Error building the request parameters.", e);
+        }
+        return params;
     }
 
-    /**
-     * The function parses a JSON API response to extract specific data and sets the values in a Stock
-     * object.
-     * 
-     * @param response The response parameter is a string that contains the API response in JSON format.
-     */
     @Override
     protected void parseApiResponse(String response) {
-        try {
-            JSONObject jsonResponse = new JSONObject(response);
-            JSONObject optionChainObject = jsonResponse.getJSONObject("optionChain");
-            JSONObject resultObject = optionChainObject.getJSONArray("result").getJSONObject(0);
-            JSONObject quoteObject = resultObject.getJSONObject("quote");
+        StockQuote stockQuote;
+        JSONObject oResponse = null;
 
-            stock.setCurrency(quoteObject.getString("currency"));
-            stock.setName(quoteObject.getString("longName"));
-            stock.setStockExchange(quoteObject.getString("fullExchangeName"));
-            stock.setQuoteType(quoteObject.getString("quoteType"));
-            LoggerCup.info("Stock data fetched successfully for %s", stock.getTicker());
+        try {
+            oResponse = new JSONObject(response)
+                .getJSONObject("optionChain")
+                .getJSONArray("result")
+                .getJSONObject(0)
+                .getJSONObject("quote");
+
+            getStock().setName(oResponse.optString("longName"));
+            getStock().setCurrency(oResponse.optString("currency"));
+            getStock().setMarket(oResponse.optString("fullExchangeName"));
+            getStock().setMarketState(oResponse.optString("marketState"));
+            getStock().setQuoteType(oResponse.optString("quoteType"));
+            getStock().setRegion(oResponse.optString("region"));
+            getStock().setExchangeTimezone(oResponse.optString("exchangeTimezoneName"));
+            getStock().setQuoteSource(oResponse.optString("quoteSourceName"));
+
+            stockQuote = new StockQuote(
+                DateUtils.fromTimestamp(String.valueOf(oResponse.get("regularMarketTime"))),
+                Parser.toDouble(oResponse.get("regularMarketPrice")),
+                Parser.toDouble(oResponse.get("regularMarketChange")),
+                Parser.toDouble(oResponse.get("regularMarketOpen")),
+                Parser.toDouble(oResponse.get("regularMarketPreviousClose")),
+                Parser.toDouble(oResponse.get("regularMarketDayLow")),
+                Parser.toDouble(oResponse.get("regularMarketDayHigh")),
+                Parser.toLong(oResponse.get("regularMarketVolume")),
+                Parser.toDouble(oResponse.get("bid")),
+                Parser.toDouble(oResponse.get("ask"))
+            );
+            getStock().setQuote(stockQuote);
+
+            logger.info("Stock data fetched successfully for %s", getStock().getTicker());
         } catch (Exception e) {
-            LoggerCup.warn("Error parsing the API response.", e);
-            LoggerCup.warn("May be the stock ticker is invalid: %s, please check the stock ticker and try again.", stock.getTicker());
+            logger.warn("Error parsing the API response.", e);
+            logger.warn("The stock ticker might be invalid: %s. Please check the ticker and try again.", getStock().getTicker());
+        } finally {
+            if (oResponse != null) oResponse.clear();
         }
     }
 }
