@@ -70,7 +70,7 @@ dependencies {
     implementation 'br.dev.rplus:cup-core:0.2.3'
     implementation 'br.dev.rplus:cup-objects:0.2.3'
     implementation 'br.dev.rplus:cup-http:0.2.3'
-    implementation 'org.json:json:20240303'
+    implementation 'org.json:json:20250517'
 
     compileOnly("org.projectlombok:lombok:1.18.42")
     annotationProcessor("org.projectlombok:lombok:1.18.42")
