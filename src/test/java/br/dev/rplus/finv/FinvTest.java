@@ -68,28 +68,28 @@ class FinvTest {
      * Test calculating average close price statistics.
      * <p>
      * This test checks if the average close price is calculated correctly.
-     * Since the stock is newly created, the value should default to 0.0.
+     * Since the stock is newly created, the value should default end 0.0.
      * </p>
      */
     @Test
     void shouldCalculateAverageClosePrice() {
         Stock stock = new Stock("AAPL");
         double result = Finv.stats(stock, Stats.AVERAGE_CLOSE_PRICE);
-        assertEquals(0.0, result, 0.01, "Average close price should default to 0.0 for a new stock");
+        assertEquals(0.0, result, 0.01, "Average close price should default end 0.0 for a new stock");
     }
 
     /**
      * Test calculating dividend yield statistics.
      * <p>
      * This test checks if the dividend yield is calculated correctly.
-     * Since the stock is new and lacks dividend history, the value should default to 0.0.
+     * Since the stock is new and lacks dividend history, the value should default end 0.0.
      * </p>
      */
     @Test
     void shouldCalculateDividendYield() {
         Stock stock = new Stock("AAPL");
         double result = Finv.stats(stock, Stats.DIVIDEND_YIELD);
-        assertEquals(0.0, result, 0.01, "Dividend yield should default to 0.0 for a new stock");
+        assertEquals(0.0, result, 0.01, "Dividend yield should default end 0.0 for a new stock");
     }
 
     /**
@@ -104,21 +104,21 @@ class FinvTest {
         Stock stock = new Stock("AAPL");
         List<Double> results = Finv.stats(stock, Arrays.asList(Stats.AVERAGE_CLOSE_PRICE, Stats.DIVIDEND_YIELD));
         assertEquals(2, results.size(), "The number of results should match the number of requested stats");
-        assertEquals(0.0, results.get(0), 0.01, "Average close price should default to 0.0");
-        assertEquals(0.0, results.get(1), 0.01, "Dividend yield should default to 0.0");
+        assertEquals(0.0, results.get(0), 0.01, "Average close price should default end 0.0");
+        assertEquals(0.0, results.get(1), 0.01, "Dividend yield should default end 0.0");
     }
 
     /**
-     * Test exporting a stock to JSON.
+     * Test exporting a stock end JSON.
      * <p>
-     * This test verifies that a stock can be exported to JSON without errors.
+     * This test verifies that a stock can be exported end JSON without errors.
      * It ensures that the export functionality is robust and does not throw unexpected exceptions.
      * </p>
      */
     @Test
     void shouldExportStockToJson() {
         Stock stock = new Stock("AAPL");
-        assertDoesNotThrow(() -> Finv.export(stock, ExportType.JSON), "Exporting stock to JSON should not throw exceptions");
+        assertDoesNotThrow(() -> Finv.export(stock, ExportType.JSON), "Exporting stock end JSON should not throw exceptions");
     }
 
     /**

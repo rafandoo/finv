@@ -1,37 +1,39 @@
 plugins {
     id 'java'
-    id 'maven-publish'
-    id 'br.dev.rplus.versioning' version '1.0.0'
+    id 'application'
+    id 'dev.rafandoo.versioning' version '1.0.0'
 }
 
-group = 'br.dev.rplus'
+group = 'dev.rafandoo'
 version = versioning.name
 
 ext.defaultManifestAttributes = { Project p ->
-    return ['Manifest-Version'      : '1.0',
-            'Specification-Version' : p.version,
-            'Specification-Vendor'  : 'R+ Dev',
-            'Specification-Title'   : 'Finv',
-            'Implementation-Version': p.version,
-            'Implementation-Vendor' : 'R+ Dev',
-            'Implementation-Title'  : 'Finv',
-            'Built-Date'            : new Date().toString(),
-            'Built-JDK'             : System.getProperty('java.version'),
-            'Built-OS'              : System.getProperty('os.name'),
-            'Built-OS-Version'      : System.getProperty('os.version'),
-            'Built-OS-Architecture' : System.getProperty('os.arch')]
+    return [
+        'Manifest-Version'      : '1.0',
+        'Specification-Version' : p.version,
+        'Specification-Vendor'  : 'R+ Dev',
+        'Specification-Title'   : 'Finv',
+        'Implementation-Version': p.version,
+        'Implementation-Vendor' : 'R+ Dev',
+        'Implementation-Title'  : 'Finv',
+        'Built-Date'            : new Date().toString(),
+        'Built-JDK'             : System.getProperty('java.version'),
+        'Built-OS'              : System.getProperty('os.name'),
+        'Built-OS-Version'      : System.getProperty('os.version'),
+        'Built-OS-Architecture' : System.getProperty('os.arch')
+    ]
 }
 
 ext.configurePom = { MavenPublication pub ->
     pub.pom {
         name.set(pub.artifactId)
-        description.set('Coffee Utilities Package (CUP) is a Java library that provides a set of utilities for Java developers.')
-        url.set('https://github.com/rafandoo/cup')
+        description.set(project.description)
+        url.set('https://github.com/rafandoo/finv')
 
         licenses {
             license {
                 name.set('Apache License, Version 2.0')
-                url.set('https://raw.githubusercontent.com/rafandoo/cup/refs/heads/main/LICENSE')
+                url.set('https://raw.githubusercontent.com/rafandoo/finv/refs/heads/main/LICENSE')
                 distribution.set('repo')
             }
         }
@@ -45,54 +47,52 @@ ext.configurePom = { MavenPublication pub ->
         }
 
         scm {
-            connection.set('scm:git:git://github.com/rafandoo/cup.git')
-            developerConnection.set('scm:git:ssh://git@github.com/rafandoo/cup.git')
-            url.set('https://github.com/rafandoo/cup')
+            connection.set('scm:git:git://github.com/rafandoo/finv.git')
+            developerConnection.set('scm:git:ssh://git@github.com/rafandoo/finv.git')
+            url.set('https://github.com/rafandoo/finv')
             tag.set('HEAD')
         }
 
         issueManagement {
             system.set('GitHub Issues')
-            url.set('https://github.com/rafandoo/cup/issues')
+            url.set('https://github.com/rafandoo/finv/issues')
         }
     }
 }
 
 repositories {
-    mavenLocal()
     mavenCentral()
-    maven {
-        url = 'https://raw.githubusercontent.com/rafandoo/cup/mvn-repo/'
-    }
+    mavenLocal()
 }
 
 dependencies {
-    implementation 'br.dev.rplus:cup-core:0.2.3'
-    implementation 'br.dev.rplus:cup-objects:0.2.3'
-    implementation 'br.dev.rplus:cup-http:0.2.3'
+    compileOnly 'org.slf4j:slf4j-api:2.0.17'
+    runtimeOnly 'org.slf4j:slf4j-simple:2.0.17'
+
+    implementation 'dev.rafandoo:cup-core:1.1.0-RC1'
+    implementation 'dev.rafandoo:cup-objects:1.1.0-RC1'
+    implementation 'dev.rafandoo:cup-http:1.1.0-RC1'
     implementation 'org.json:json:20250517'
 
-    compileOnly("org.projectlombok:lombok:1.18.42")
-    annotationProcessor("org.projectlombok:lombok:1.18.42")
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.1'
 
+    // Testing
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    testCompileOnly("org.projectlombok:lombok:1.18.42")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.42'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
-
-    withJavadocJar()
-    withSourcesJar()
-}
-
-javadoc {
-    options.addStringOption('Xdoclint:none', '-quiet')
 }
 
 compileJava {
@@ -112,38 +112,18 @@ tasks.withType(Jar).configureEach {
     exclude('**/.gitkeep')
 }
 
-tasks.register('fatJar', Jar) {
+tasks.register('runnableJar', Jar) {
     group = 'build'
-    description = 'Builds a JAR with dependencies (fat jar).'
+    description = 'Assembles a runnable jar archive containing the main class and all dependencies.'
 
     archiveClassifier.set('aio')
-
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
-    with jar
-}
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-publishing {
-    publications {
-        create('mavenJava', MavenPublication) {
-            from components.java
-            configurePom(delegate)
-        }
-    }
+    exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/${githubRepository}")
-            credentials {
-                username = "${githubUsername}"
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
+    with tasks.jar
 }
