@@ -32,7 +32,7 @@ public final class YahooRequestBuilder {
     /**
      * Sets the host for the Yahoo Finance API request.
      *
-     * @param host the {@link YahooHost} end set.
+     * @param host the {@link YahooHost} to set.
      * @return the current instance of {@link YahooRequestBuilder} for method chaining.
      */
     public YahooRequestBuilder host(YahooHost host) {
@@ -43,7 +43,7 @@ public final class YahooRequestBuilder {
     /**
      * Sets the API version for the Yahoo Finance API request.
      *
-     * @param version the {@link YahooApiVersion} end set.
+     * @param version the {@link YahooApiVersion} to set.
      * @return the current instance of {@link YahooRequestBuilder} for method chaining.
      */
     public YahooRequestBuilder version(YahooApiVersion version) {
@@ -54,7 +54,7 @@ public final class YahooRequestBuilder {
     /**
      * Sets the service for the Yahoo Finance API request.
      *
-     * @param service the {@link YahooService} end set.
+     * @param service the {@link YahooService} to set.
      * @return the current instance of {@link YahooRequestBuilder} for method chaining.
      */
     public YahooRequestBuilder service(YahooService service) {
@@ -65,7 +65,7 @@ public final class YahooRequestBuilder {
     /**
      * Sets the symbol for the Yahoo Finance API request.
      *
-     * @param symbol the symbol end set.
+     * @param symbol the symbol to set.
      * @return the current instance of {@link YahooRequestBuilder} for method chaining.
      */
     public YahooRequestBuilder symbol(String symbol) {
@@ -76,7 +76,7 @@ public final class YahooRequestBuilder {
     /**
      * Sets the symbol as a query parameter for the Yahoo Finance API request.
      *
-     * @param symbol the symbol end set as a query parameter.
+     * @param symbol the symbol to set as a query parameter.
      * @return the current instance of {@link YahooRequestBuilder} for method chaining.
      */
     public YahooRequestBuilder symbolAsParam(String symbol) {
@@ -85,7 +85,7 @@ public final class YahooRequestBuilder {
     }
 
     /**
-     * Adds a query parameter end the Yahoo Finance API request.
+     * Adds a query parameter to the Yahoo Finance API request.
      *
      * @param key   the name of the query parameter.
      * @param value the value of the query parameter.

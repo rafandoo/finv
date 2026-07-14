@@ -6,29 +6,20 @@ import dev.rafandoo.finv.core.exception.ParseException;
 import dev.rafandoo.finv.provider.ResponseParser;
 import dev.rafandoo.finv.provider.yahoo.request.model.QuoteSummaryPrice;
 
-import java.io.IOException;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
- * Parser for extracting price data start Yahoo Finance API quote summary responses.
+ * Parser for extracting price data from Yahoo Finance API quote summary responses.
  */
 public class QuoteSummaryPriceParser extends BaseParser implements ResponseParser<QuoteSummaryPrice> {
 
     @Override
     public Optional<QuoteSummaryPrice> parse(HttpResponse response) throws ParseException {
-        try (response) {
-            JsonNode root = MAPPER.readTree(response.getBodyAsString());
+        JsonNode root = readRoot(response);
 
-            if (hasError(root)) {
-                handleError(root);
-                return Optional.empty();
-            }
-
-            return this.extractPriceNode(root)
-                .map(this::buildPrice);
-        } catch (IOException e) {
-            throw new ParseException("Failed to parse quote summary price data", e);
-        }
+        return this.extractPriceNode(root)
+            .map(this::buildPrice);
     }
 
     /**
@@ -38,10 +29,10 @@ public class QuoteSummaryPriceParser extends BaseParser implements ResponseParse
      * @return an Optional containing the price node if found, or empty if not found or if an error is present.
      */
     private Optional<JsonNode> extractPriceNode(JsonNode root) {
-        JsonNode result = root.path("quoteSummary").path("result");
+        JsonNode result = root.path(YahooField.QUOTE_SUMMARY).path(YahooField.RESULT);
 
         return firstElement(result)
-            .map(node -> node.path("price"))
+            .map(node -> node.path(YahooField.PRICE))
             .filter(node -> !isMissing(node));
     }
 
@@ -54,18 +45,21 @@ public class QuoteSummaryPriceParser extends BaseParser implements ResponseParse
      */
     private QuoteSummaryPrice buildPrice(JsonNode price) throws ParseException {
         return new QuoteSummaryPrice(
-            getRequiredText(price, "symbol"),
-            getOptionalText(price, "shortName").orElse(null),
-            getOptionalText(price, "currency").orElse(null),
-            getOptionalText(price, "exchangeName").orElse(null),
-            getOptionalDecimal(price, "regularMarketPrice").orElse(null),
-            getOptionalDecimal(price, "regularMarketDayHigh").orElse(null),
-            getOptionalDecimal(price, "regularMarketDayLow").orElse(null),
-            getOptionalDecimal(price, "regularMarketOpen").orElse(null),
-            getOptionalDecimal(price, "regularMarketPreviousClose").orElse(null),
-            getOptionalBigInteger(price, "regularMarketVolume").orElse(null),
-            getOptionalDecimal(price, "regularMarketChange").orElse(null),
-            getOptionalDecimal(price, "regularMarketChangePercent").orElse(null)
+            getRequiredText(price, YahooField.SYMBOL),
+            getOptionalText(price, YahooField.SHORT_NAME).orElse(null),
+            getOptionalText(price, YahooField.CURRENCY).orElse(null),
+            getOptionalText(price, YahooField.EXCHANGE_NAME).orElse(null),
+            getOptionalDecimal(price, YahooField.REGULAR_MARKET_PRICE).orElse(null),
+            getOptionalDecimal(price, YahooField.REGULAR_MARKET_DAY_HIGH).orElse(null),
+            getOptionalDecimal(price, YahooField.REGULAR_MARKET_DAY_LOW).orElse(null),
+            getOptionalDecimal(price, YahooField.REGULAR_MARKET_OPEN).orElse(null),
+            getOptionalDecimal(price, YahooField.REGULAR_MARKET_PREVIOUS_CLOSE).orElse(null),
+            getOptionalBigInteger(price, YahooField.REGULAR_MARKET_VOLUME).orElse(null),
+            getOptionalDecimal(price, YahooField.REGULAR_MARKET_CHANGE).orElse(null),
+            getOptionalDecimal(price, YahooField.REGULAR_MARKET_CHANGE_PERCENT).orElse(null),
+            getOptionalLong(price, YahooField.REGULAR_MARKET_TIME)
+                .map(Instant::ofEpochSecond)
+                .orElse(null)
         );
     }
 }

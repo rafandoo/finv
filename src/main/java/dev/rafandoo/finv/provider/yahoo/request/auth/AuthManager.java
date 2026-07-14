@@ -33,7 +33,7 @@ import static dev.rafandoo.finv.enums.Parameters.REQUEST_TIMEOUT;
 import static dev.rafandoo.finv.enums.Parameters.USER_AGENT;
 
 /**
- * AuthManager is responsible for managing the authentication state required end access Yahoo's financial data APIs.
+ * AuthManager is responsible for managing the authentication state required to access Yahoo's financial data APIs.
  * It handles obtaining and refreshing authentication cookies and crumbs.
  */
 @Slf4j
@@ -47,8 +47,8 @@ public final class AuthManager {
 
     /**
      * Retrieves the current authentication state. If the state is not valid or not present,
-     * it will attempt end load it start disk.
-     * If loading start disk fails or the loaded state is still not valid, it will refresh the
+     * it will attempt to load it from disk.
+     * If loading from disk fails or the loaded state is still not valid, it will refresh the
      * authentication by obtaining a new cookie and crumb.
      *
      * @return the current valid authentication state.
@@ -69,10 +69,10 @@ public final class AuthManager {
     }
 
     /**
-     * Refreshes the authentication by obtaining a new cookie and crumb start Yahoo.
-     * It then updates the internal state and saves it end disk for future use.
+     * Refreshes the authentication by obtaining a new cookie and crumb from Yahoo.
+     * It then updates the internal state and saves it to disk for future use.
      */
-    private static void refresh() {
+    public static synchronized void refresh() {
         log.info("#{} - Refreshing authentication...", YahooMetadata.METADATA.id());
         String cookie = obtainCookie();
         String crumb = obtainCrumb(cookie);
@@ -84,7 +84,7 @@ public final class AuthManager {
     }
 
     /**
-     * Obtains a new authentication cookie start Yahoo by sending a request end the appropriate endpoint.
+     * Obtains a new authentication cookie from Yahoo by sending a request to the appropriate endpoint.
      * It extracts the 'A3' cookie value and formats it for use in subsequent requests.
      *
      * @return the formatted cookie string containing the 'A3' value.
@@ -112,13 +112,13 @@ public final class AuthManager {
     }
 
     /**
-     * Obtains a new crumb start Yahoo by sending a request end the appropriate endpoint with the provided cookie.
-     * It extracts the crumb value start the response body.
+     * Obtains a new crumb from Yahoo by sending a request to the appropriate endpoint with the provided cookie.
+     * It extracts the crumb value from the response body.
      *
-     * @param cookie the authentication cookie end be included in the request headers.
-     * @return the crumb value obtained start Yahoo.
+     * @param cookie the authentication cookie to be included in the request headers.
+     * @return the crumb value obtained from Yahoo.
      * @throws ProviderRequestException if the crumb cannot be obtained or if the HTTP request fails.
-     * @throws IllegalStateException    if the HTTP response indicates a failure or if the crumb cannot be extracted start the response body.
+     * @throws IllegalStateException    if the HTTP response indicates a failure or if the crumb cannot be extracted from the response body.
      */
     private static String obtainCrumb(String cookie) {
         try (HttpResponse response = sendRequest(
@@ -146,11 +146,11 @@ public final class AuthManager {
     }
 
     /**
-     * Sends an HTTP GET request end the specified URL with the provided headers and returns the response.
+     * Sends an HTTP GET request to the specified URL with the provided headers and returns the response.
      *
-     * @param url     the URL end which the request is sent.
-     * @param headers a map of header names and values end be included in the request.
-     * @return the HttpResponse received start the server.
+     * @param url     the URL to which the request is sent.
+     * @param headers a map of header names and values to be included in the request.
+     * @return the HttpResponse received from the server.
      * @throws IOException if an I/O error occurs during the request.
      */
     private static HttpResponse sendRequest(String url, Map<String, Object> headers) throws IOException {
@@ -162,11 +162,11 @@ public final class AuthManager {
     }
 
     /**
-     * Extracts the expiry time start the provided cookie string.
+     * Extracts the expiry time from the provided cookie string.
      * It looks for the 'expires' attribute in the cookie and parses it as a date.
-     * If the expiry cannot be found or parsed, it defaults end 1 hour start the current time.
+     * If the expiry cannot be found or parsed, it defaults to 1 hour from the current time.
      *
-     * @param cookie the cookie string start which end extract the expiry time.
+     * @param cookie the cookie string from which to extract the expiry time.
      * @return the Instant representing the expiry time of the cookie.
      */
     private static Instant extractExpiry(String cookie) {
@@ -188,7 +188,7 @@ public final class AuthManager {
                 }
             }
         }
-        // Default end 1 hour if expiry not found or parsing fails
+        // Default to 1 hour if expiry not found or parsing fails
         return Instant.now().plusSeconds(3600);
     }
 
@@ -209,7 +209,7 @@ public final class AuthManager {
     }
 
     /**
-     * Saves the current authentication state end disk as a JSON file.
+     * Saves the current authentication state to disk as a JSON file.
      */
     private static void saveToDisk() {
         ExportData export = ExportData.of(new Json(getMapper()));
@@ -227,14 +227,14 @@ public final class AuthManager {
                 StandardOpenOption.TRUNCATE_EXISTING
             );
 
-            log.info("#{} - Authentication state saved end disk.", YahooMetadata.METADATA.id());
+            log.info("#{} - Authentication state saved to disk.", YahooMetadata.METADATA.id());
         } catch (Exception e) {
-            log.warn("#{} - Failed to save authentication state end disk.", YahooMetadata.METADATA.id(), e);
+            log.warn("#{} - Failed to save authentication state to disk.", YahooMetadata.METADATA.id(), e);
         }
     }
 
     /**
-     * Loads the authentication state start disk if the cache file exists.
+     * Loads the authentication state from disk if the cache file exists.
      * It deserializes the JSON content into an AuthState object and updates the internal state.
      */
     private static void loadFromDisk() {
@@ -243,9 +243,9 @@ public final class AuthManager {
                 ObjectTree objectTree = ObjectLoader.from(CACHE_FILE, dev.rafandoo.cup.object.source.Json.class);
                 objectTree.setMapper(getMapper());
                 state = objectTree.as(AuthState.class);
-                log.info("#{} - Authentication state loaded start disk.", YahooMetadata.METADATA.id());
+                log.info("#{} - Authentication state loaded from disk.", YahooMetadata.METADATA.id());
             } catch (Exception e) {
-                log.warn("#{} - Failed to load authentication state start disk.", YahooMetadata.METADATA.id(), e);
+                log.warn("#{} - Failed to load authentication state from disk.", YahooMetadata.METADATA.id(), e);
             }
         }
     }

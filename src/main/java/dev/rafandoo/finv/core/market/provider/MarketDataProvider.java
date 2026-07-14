@@ -22,7 +22,7 @@ public interface MarketDataProvider {
     /**
      * Returns metadata about the market data provider, such as its name and supported features.
      *
-     * @return a MarketDataProviderMetadata object containing information about the provider.
+     * @return a {@link ProviderMetadata} object containing information about the provider.
      */
     ProviderMetadata metadata();
 
@@ -60,21 +60,31 @@ public interface MarketDataProvider {
     Stream<Candle> history(Asset asset, TimeRange range);
 
     /**
+     * Retrieves the historical price data (candles) for a given asset and time range.
+     *
+     * @param asset           the asset for which to retrieve historical data.
+     * @param range           the time range for which to retrieve historical data.
+     * @param includeAdjClose whether the adjusted closing price should be included in each candle.
+     * @return a Stream of Candle objects representing the historical price data.
+     */
+    Stream<Candle> history(Asset asset, TimeRange range, boolean includeAdjClose);
+
+    /**
      * Retrieves the dividend events for a given stock and time range.
      *
      * @param stock the stock for which to retrieve dividend events.
      * @param range the time range for which to retrieve dividend events.
-     * @return an Optional containing a Stream of DividendEvent objects if found, or an empty Optional if not found.
+     * @return a Stream of DividendEvent objects, possibly empty.
      */
-    Optional<Stream<DividendEvent>> dividends(Stock stock, TimeRange range);
+    Stream<DividendEvent> dividends(Stock stock, TimeRange range);
 
     /**
      * Retrieves the split events for a given stock and time range.
      *
      * @param stock the stock for which to retrieve split events.
      * @param range the time range for which to retrieve split events.
-     * @return an Optional containing a Stream of SplitEvent objects if found, or an empty Optional if not found.
+     * @return a Stream of SplitEvent objects, possibly empty.
      */
-    Optional<Stream<SplitEvent>> splits(Stock stock, TimeRange range);
+    Stream<SplitEvent> splits(Stock stock, TimeRange range);
 
 }

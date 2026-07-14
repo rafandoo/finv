@@ -10,7 +10,7 @@ import dev.rafandoo.finv.provider.yahoo.request.model.QuoteData;
 import dev.rafandoo.finv.provider.yahoo.request.parse.QuoteParser;
 
 /**
- * A request end retrieve basic quote information for a given symbol start the Yahoo Finance API.
+ * A request to retrieve basic quote information for a given symbol from the Yahoo Finance API.
  */
 public final class QuoteRequest implements YahooRequest<QuoteData> {
 

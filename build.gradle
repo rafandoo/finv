@@ -1,7 +1,12 @@
 plugins {
     id 'java'
+    id 'jacoco'
     id 'application'
     id 'dev.rafandoo.versioning' version '1.0.0'
+}
+
+application {
+    mainClass = 'dev.rafandoo.finv.Sandbox'
 }
 
 group = 'dev.rafandoo'
@@ -79,6 +84,9 @@ dependencies {
     // Testing
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
+    testImplementation 'org.assertj:assertj-core:3.27.3'
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
@@ -102,7 +110,54 @@ compileJava {
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
 }
+
+def jacocoExclusions = [
+]
+
+jacoco {
+    toolVersion = '0.8.14'
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml.required = true
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
+
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(
+            files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: jacocoExclusions)
+            })
+        )
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80
+            }
+        }
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(
+            files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: jacocoExclusions)
+            })
+        )
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
 
 tasks.withType(Jar).configureEach {
     manifest {

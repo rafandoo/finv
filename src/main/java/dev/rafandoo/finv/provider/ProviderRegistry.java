@@ -11,6 +11,15 @@ public class ProviderRegistry {
 
     private final List<MarketDataProvider> providers = new ArrayList<>();
 
+    /**
+     * Registers a market data provider so it can be resolved for the asset types and features it supports.
+     *
+     * @param provider the provider to register.
+     */
+    public void register(MarketDataProvider provider) {
+        providers.add(provider);
+    }
+
     public MarketDataProvider resolve(Asset asset, Feature feature) {
         return providers.stream()
             .filter(p -> p.supports(asset.type()))

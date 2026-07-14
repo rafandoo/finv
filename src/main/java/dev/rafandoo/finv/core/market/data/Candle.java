@@ -8,12 +8,13 @@ import java.time.Instant;
  * Represents a single candlestick in a price chart, containing the open, high, low, close prices and volume for a
  * specific time period.
  *
- * @param date   the date and time of the candlestick.
- * @param open   the opening price of the candlestick.
- * @param high   the highest price reached during the candlestick period.
- * @param low    the lowest price reached during the candlestick period.
- * @param close  the closing price of the candlestick.
- * @param volume the trading volume during the candlestick period.
+ * @param date     the date and time of the candlestick.
+ * @param open     the opening price of the candlestick.
+ * @param high     the highest price reached during the candlestick period.
+ * @param low      the lowest price reached during the candlestick period.
+ * @param close    the closing price of the candlestick.
+ * @param volume   the trading volume during the candlestick period.
+ * @param adjClose the adjusted closing price for the period, or {@code null} when not requested.
  */
 public record Candle(
     Instant date,
@@ -21,6 +22,7 @@ public record Candle(
     BigDecimal high,
     BigDecimal low,
     BigDecimal close,
-    BigInteger volume
+    BigInteger volume,
+    BigDecimal adjClose
 ) {
 }

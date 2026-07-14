@@ -10,7 +10,7 @@ import dev.rafandoo.finv.provider.yahoo.request.enums.YahooService;
 import dev.rafandoo.finv.provider.yahoo.request.parse.QuoteSummaryPriceParser;
 
 /**
- * A request end retrieve detailed price information for a given symbol start the Yahoo Finance API.
+ * A request to retrieve detailed price information for a given symbol from the Yahoo Finance API.
  */
 public final class QuoteSummaryPriceRequest implements YahooRequest<QuoteSummaryPrice> {
 

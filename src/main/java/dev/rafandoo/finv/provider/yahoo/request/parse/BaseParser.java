@@ -3,11 +3,13 @@ package dev.rafandoo.finv.provider.yahoo.request.parse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.rafandoo.cup.JacksonMapperFactory;
+import dev.rafandoo.cup.request.HttpResponse;
 import dev.rafandoo.finv.core.exception.ParseException;
 import dev.rafandoo.finv.provider.yahoo.YahooMetadata;
 import dev.rafandoo.finv.provider.yahoo.request.model.ErrorMessage;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
@@ -21,52 +23,95 @@ public abstract class BaseParser {
     protected static final ObjectMapper MAPPER = JacksonMapperFactory.json();
 
     /**
-     * Checks if the given JSON response contains an error message.
+     * Reads and parses the response body into a JSON tree, applying the shared error gate.
+     * <p>
+     * This centralizes the read-tree + API-error preamble that every parser previously duplicated. If the
+     * response carries a Yahoo API error (top-level {@code error}, a {@code chart.error}, or a null/empty
+     * result), a {@link ParseException} is thrown carrying the API error message so the failure is never
+     * silently treated as "no data".
      *
-     * @param root the root JsonNode of the response to check for errors.
+     * @param response the HTTP response to read.
+     * @return the parsed root JSON node.
+     * @throws ParseException when the body cannot be read or the API reports an error.
+     */
+    protected JsonNode readRoot(HttpResponse response) throws ParseException {
+        try (response) {
+            JsonNode root = MAPPER.readTree(response.getBodyAsString());
+
+            if (hasApiError(root)) {
+                ErrorMessage error = apiErrorMessage(root);
+                String detail = error != null
+                    ? "#%s - %s: %s".formatted(YahooMetadata.METADATA.id(), error.code(), error.description())
+                    : "#%s - Yahoo returned an error but no details were available".formatted(YahooMetadata.METADATA.id());
+                log.error(detail);
+                throw new ParseException(detail);
+            }
+
+            return root;
+        } catch (IOException e) {
+            throw new ParseException("Failed to read response body", e);
+        }
+    }
+
+    /**
+     * Checks whether the given JSON response contains a Yahoo API error.
+     * <p>
+     * Yahoo reports errors in several shapes: a top-level {@code error} node, a {@code chart.error}
+     * node (chart endpoint), or a missing/empty {@code result} array (bad symbol on chart/quoteSummary).
+     *
+     * @param root the root JsonNode of the response.
      * @return {@code true} if an error is present, {@code false} otherwise.
      */
-    protected boolean hasError(JsonNode root) {
-        return Optional.ofNullable(root.findValue("error"))
-            .filter(node -> !node.isNull() && !node.isMissingNode() && !node.isEmpty())
-            .isPresent();
-    }
-
-    /**
-     * Handles the error response by parsing the error message and logging it appropriately.
-     *
-     * @param json the JsonNode containing the error information to be parsed and logged.
-     */
-    protected void handleError(JsonNode json) {
-        parseErrorMessage(json).ifPresentOrElse(
-            errorMessage -> log.error(
-                "#{} - Failed to parse response: {} - {}",
-                YahooMetadata.METADATA.id(),
-                errorMessage.code(),
-                errorMessage.description()
-            ),
-            () -> log.error(
-                "#{} - Failed to parse response: Unknown error format",
-                YahooMetadata.METADATA.id()
-            )
-        );
-    }
-
-    /**
-     * Parses the error message from the given JSON node.
-     *
-     * @param root the JsonNode to parse for error information.
-     * @return an Optional containing the ErrorMessage if found, or an empty Optional if no error message is present.
-     */
-    private Optional<ErrorMessage> parseErrorMessage(JsonNode root) {
-        JsonNode error = root.findValue("error");
-        if (isMissing(error)) {
-            return Optional.empty();
+    protected boolean hasApiError(JsonNode root) {
+        if (root == null || root.isMissingNode()) {
+            return true;
         }
-        return Optional.of(new ErrorMessage(
-            error.path("code").asText(null),
-            error.path("description").asText(null)
-        ));
+
+        JsonNode topError = root.path(YahooField.ERROR);
+        if (!isMissing(topError)) {
+            return true;
+        }
+
+        JsonNode chartError = root.path(YahooField.CHART).path(YahooField.ERROR);
+        if (!isMissing(chartError)) {
+            return true;
+        }
+
+        return resultIsEmpty(root);
+    }
+
+    /**
+     * Detects the "bad symbol" shape where the {@code result} array is null or empty (chart and
+     * quoteSummary endpoints return this instead of an explicit error node).
+     */
+    private boolean resultIsEmpty(JsonNode root) {
+        for (String container : new String[]{YahooField.CHART, YahooField.QUOTE_RESPONSE, YahooField.QUOTE_SUMMARY}) {
+            JsonNode result = root.path(container).path(YahooField.RESULT);
+            if (!result.isMissingNode() && result.isArray() && result.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Extracts a human-readable error message from a Yahoo API error response.
+     *
+     * @param root the JsonNode containing the error information.
+     * @return an {@link ErrorMessage} if found, or {@code null} otherwise.
+     */
+    protected ErrorMessage apiErrorMessage(JsonNode root) {
+        JsonNode error = root.path(YahooField.ERROR);
+        if (isMissing(error)) {
+            error = root.path(YahooField.CHART).path(YahooField.ERROR);
+        }
+        if (isMissing(error)) {
+            return null;
+        }
+        return new ErrorMessage(
+            error.path(YahooField.CODE).asText(null),
+            error.path(YahooField.DESCRIPTION).asText(null)
+        );
     }
 
     /**

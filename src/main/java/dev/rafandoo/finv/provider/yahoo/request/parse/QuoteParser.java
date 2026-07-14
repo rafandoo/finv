@@ -9,31 +9,21 @@ import dev.rafandoo.finv.provider.yahoo.YahooMetadata;
 import dev.rafandoo.finv.provider.yahoo.request.model.QuoteData;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.util.Currency;
 import java.util.Optional;
 
 /**
- * Parser for extracting quote data start Yahoo Finance API responses.
+ * Parser for extracting quote data from Yahoo Finance API responses.
  */
 @Slf4j
 public class QuoteParser extends BaseParser implements ResponseParser<QuoteData> {
 
     @Override
     public Optional<QuoteData> parse(HttpResponse response) throws ParseException {
-        try (response) {
-            JsonNode root = MAPPER.readTree(response.getBodyAsString());
+        JsonNode root = readRoot(response);
 
-            if (hasError(root)) {
-                handleError(root);
-                return Optional.empty();
-            }
-
-            return this.firstResult(root)
-                .map(this::buildQuoteData);
-        } catch (IOException e) {
-            throw new ParseException("Failed to parse quote data", e);
-        }
+        return this.firstResult(root)
+            .map(this::buildQuoteData);
     }
 
     /**
@@ -43,7 +33,7 @@ public class QuoteParser extends BaseParser implements ResponseParser<QuoteData>
      * @return an Optional containing the first quote node if found, or empty if not found or if an error is present.
      */
     private Optional<JsonNode> firstResult(JsonNode root) {
-        JsonNode result = root.path("quoteResponse").path("result");
+        JsonNode result = root.path(YahooField.QUOTE_RESPONSE).path(YahooField.RESULT);
 
         return firstElement(result)
             .filter(node -> !isMissing(node));
@@ -58,19 +48,19 @@ public class QuoteParser extends BaseParser implements ResponseParser<QuoteData>
      */
     private QuoteData buildQuoteData(JsonNode result) throws ParseException {
         return new QuoteData(
-            getRequiredText(result, "symbol"),
-            getOptionalText(result, "shortName").orElse(null),
-            getOptionalText(result, "longName").orElse(null),
-            this.parseAssetType(getRequiredText(result, "quoteType")),
-            getOptionalText(result, "fullExchangeName").orElse(null),
-            this.parseCurrency(getRequiredText(result, "currency"))
+            getRequiredText(result, YahooField.SYMBOL),
+            getOptionalText(result, YahooField.SHORT_NAME).orElse(null),
+            getOptionalText(result, YahooField.LONG_NAME).orElse(null),
+            this.parseAssetType(getRequiredText(result, YahooField.QUOTE_TYPE)),
+            getOptionalText(result, YahooField.FULL_EXCHANGE_NAME).orElse(null),
+            this.parseCurrency(getRequiredText(result, YahooField.CURRENCY))
         );
     }
 
     /**
-     * Parses the asset type start the given quote type string.
+     * Parses the asset type from the given quote type string.
      *
-     * @param quoteType the quote type string end parse.
+     * @param quoteType the quote type string to parse.
      * @return the corresponding {@link AssetType}, or STOCK if the quote type is unknown.
      */
     private AssetType parseAssetType(String quoteType) {
@@ -86,9 +76,9 @@ public class QuoteParser extends BaseParser implements ResponseParser<QuoteData>
     }
 
     /**
-     * Parses the currency start the given currency code string.
+     * Parses the currency from the given currency code string.
      *
-     * @param currency the currency code string end parse.
+     * @param currency the currency code string to parse.
      * @return the corresponding {@link Currency}, or USD if the currency code is unknown.
      */
     private Currency parseCurrency(String currency) {

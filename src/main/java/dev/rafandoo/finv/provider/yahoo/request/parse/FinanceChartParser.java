@@ -11,7 +11,7 @@ import dev.rafandoo.finv.provider.yahoo.request.model.YahooDividend;
 import dev.rafandoo.finv.provider.yahoo.request.model.YahooSplit;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,38 +25,35 @@ import java.util.Optional;
 public class FinanceChartParser extends BaseParser implements ResponseParser<ChartAggregate> {
 
     private final EventExtractor extractor;
+    private final boolean includeAdjClose;
 
     public FinanceChartParser(YahooEvent event) {
+        this(event, false);
+    }
+
+    public FinanceChartParser(YahooEvent event, boolean includeAdjClose) {
         this.extractor = switch (event) {
             case HISTORY -> this::extractHistory;
             case DIVIDEND -> this::extractDividends;
             case SPLIT -> this::extractSplits;
         };
+        this.includeAdjClose = includeAdjClose;
     }
 
     @Override
     public Optional<ChartAggregate> parse(HttpResponse response) throws ParseException {
-        try (response) {
-            JsonNode root = MAPPER.readTree(response.getBodyAsString());
+        JsonNode root = readRoot(response);
 
-            if (hasError(root)) {
-                handleError(root);
-                return Optional.empty();
-            }
-
-            Optional<JsonNode> firstResult = this.firstResult(root);
-            if (firstResult.isEmpty()) {
-                log.warn("No result found in response");
-                return Optional.empty();
-            }
-
-            JsonNode result = firstResult.get();
-            String symbol = this.extractSymbol(result);
-
-            return Optional.of(this.extractor.extract(symbol, result));
-        } catch (IOException e) {
-            throw new ParseException("Failed to parse finance chart response", e);
+        Optional<JsonNode> firstResult = this.firstResult(root);
+        if (firstResult.isEmpty()) {
+            log.warn("No result found in response");
+            return Optional.empty();
         }
+
+        JsonNode result = firstResult.get();
+        String symbol = this.extractSymbol(result);
+
+        return Optional.of(this.extractor.extract(symbol, result));
     }
 
     /**
@@ -90,7 +87,7 @@ public class FinanceChartParser extends BaseParser implements ResponseParser<Cha
         return new ChartAggregate(
             symbol,
             List.of(),
-            this.buildEventList(result, "dividends", this::buildYahooDividend),
+            this.buildEventList(result, YahooField.DIVIDENDS, this::buildYahooDividend),
             List.of()
         );
     }
@@ -109,7 +106,7 @@ public class FinanceChartParser extends BaseParser implements ResponseParser<Cha
             symbol,
             List.of(),
             List.of(),
-            this.buildEventList(result, "splits", this::buildYahooSplit)
+            this.buildEventList(result, YahooField.SPLITS, this::buildYahooSplit)
         );
     }
 
@@ -125,7 +122,7 @@ public class FinanceChartParser extends BaseParser implements ResponseParser<Cha
      * @return a list of event objects extracted from the JSON result, or an empty list if no valid events are found.
      */
     private <T> List<T> buildEventList(JsonNode result, String nodeName, EventNodeMapper<T> mapper) {
-        JsonNode events = result.path("events").path(nodeName);
+        JsonNode events = result.path(YahooField.EVENTS).path(nodeName);
 
         if (isMissing(events) || !events.isObject()) {
             return List.of();
@@ -152,13 +149,15 @@ public class FinanceChartParser extends BaseParser implements ResponseParser<Cha
      * @throws ParseException if there is an error during parsing of the historical price data from the JSON result.
      */
     private List<YahooCandle> buildYahooCandleList(JsonNode result) throws ParseException {
-        JsonNode timestamps = getRequiredArray(result, "timestamp");
+        JsonNode timestamps = getRequiredArray(result, YahooField.TIMESTAMP);
 
-        JsonNode quote = firstElement(result.path("indicators").path("quote"))
+        JsonNode quote = firstElement(result.path(YahooField.INDICATORS).path(YahooField.QUOTE))
             .filter(node -> !isMissing(node))
             .orElseThrow(() ->
                 new ParseException("Failed to parse historical data response: No quote data found")
             );
+
+        JsonNode adjClose = this.adjCloseArray(result);
 
         List<YahooCandle> list = new ArrayList<>(timestamps.size());
 
@@ -166,15 +165,43 @@ public class FinanceChartParser extends BaseParser implements ResponseParser<Cha
             list.add(
                 new YahooCandle(
                     Instant.ofEpochSecond(timestamps.get(i).asLong()),
-                    getDecimal(quote.path("open"), i),
-                    getDecimal(quote.path("high"), i),
-                    getDecimal(quote.path("low"), i),
-                    getDecimal(quote.path("close"), i),
-                    getBigInteger(quote.path("volume"), i)
+                    getDecimal(quote.path(YahooField.OPEN), i),
+                    getDecimal(quote.path(YahooField.HIGH), i),
+                    getDecimal(quote.path(YahooField.LOW), i),
+                    getDecimal(quote.path(YahooField.CLOSE), i),
+                    getBigInteger(quote.path(YahooField.VOLUME), i),
+                    this.includeAdjClose ? this.adjCloseAt(adjClose, i) : null
                 )
             );
         }
         return list;
+    }
+
+    /**
+     * Resolves the {@code adjclose} array from the indicators node, or {@code null} when adjusted close
+     * was not requested or is absent.
+     *
+     * @param result the JsonNode containing the historical data to be parsed.
+     * @return the adjclose array node, or {@code null} when not present.
+     */
+    private JsonNode adjCloseArray(JsonNode result) {
+        if (!this.includeAdjClose) {
+            return null;
+        }
+        return firstElement(result.path(YahooField.INDICATORS).path(YahooField.ADJCLOSE))
+            .filter(node -> !isMissing(node))
+            .orElse(null);
+    }
+
+    /**
+     * Retrieves the adjusted close value at the given index, or {@code null} when missing.
+     *
+     * @param adjClose the adjclose array node.
+     * @param i        the index of the value to retrieve.
+     * @return the adjusted close at the index, or {@code null} when the array is missing/null at that index.
+     */
+    private BigDecimal adjCloseAt(JsonNode adjClose, int i) {
+        return adjClose == null ? null : getDecimal(adjClose.path(YahooField.ADJCLOSE), i);
     }
 
     /**
@@ -186,8 +213,8 @@ public class FinanceChartParser extends BaseParser implements ResponseParser<Cha
      */
     private YahooDividend buildYahooDividend(JsonNode node) throws ParseException {
         return new YahooDividend(
-            Instant.ofEpochSecond(getRequiredLong(node, "date")),
-            getRequiredDecimal(node, "amount")
+            Instant.ofEpochSecond(getRequiredLong(node, YahooField.DATE)),
+            getRequiredDecimal(node, YahooField.AMOUNT)
         );
     }
 
@@ -200,8 +227,8 @@ public class FinanceChartParser extends BaseParser implements ResponseParser<Cha
      */
     private YahooSplit buildYahooSplit(JsonNode node) throws ParseException {
         return new YahooSplit(
-            Instant.ofEpochSecond(getRequiredLong(node, "date")),
-            getRequiredText(node, "splitRatio")
+            Instant.ofEpochSecond(getRequiredLong(node, YahooField.DATE)),
+            getRequiredText(node, YahooField.SPLIT_RATIO)
         );
     }
 
@@ -213,7 +240,7 @@ public class FinanceChartParser extends BaseParser implements ResponseParser<Cha
      * valid result is found.
      */
     private Optional<JsonNode> firstResult(JsonNode root) {
-        JsonNode result = root.path("chart").path("result");
+        JsonNode result = root.path(YahooField.CHART).path(YahooField.RESULT);
 
         return firstElement(result)
             .filter(node -> !isMissing(node));
@@ -227,7 +254,7 @@ public class FinanceChartParser extends BaseParser implements ResponseParser<Cha
      * @throws ParseException if there is an error during parsing of the stock symbol from the JSON result node.
      */
     private String extractSymbol(JsonNode result) {
-        return getRequiredText(result.path("meta"), "symbol");
+        return getRequiredText(result.path(YahooField.META), YahooField.SYMBOL);
     }
 
     /**

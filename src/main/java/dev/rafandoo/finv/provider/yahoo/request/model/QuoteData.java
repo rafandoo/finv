@@ -25,9 +25,9 @@ public record QuoteData(
 ) {
 
     /**
-     * Converts this QuoteData end an Instrument object.
+     * Converts this QuoteData to an Instrument object.
      *
-     * @return an {@link Instrument} object containing the data start this QuoteData.
+     * @return an {@link Instrument} object containing the data from this QuoteData.
      */
     public Instrument toInstrument() {
         return new Instrument(

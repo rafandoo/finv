@@ -4,6 +4,7 @@ import dev.rafandoo.cup.request.HttpRequester;
 import dev.rafandoo.cup.request.HttpResponse;
 import dev.rafandoo.cup.request.UrlBuilder;
 import dev.rafandoo.finv.core.exception.ParseException;
+import dev.rafandoo.finv.core.exception.ProviderRequestException;
 import dev.rafandoo.finv.provider.yahoo.YahooMetadata;
 import dev.rafandoo.finv.provider.yahoo.request.auth.AuthState;
 import dev.rafandoo.finv.provider.yahoo.request.endpoint.YahooRequest;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
+import static dev.rafandoo.finv.enums.Parameters.REQUEST_TIMEOUT;
 import static dev.rafandoo.finv.enums.Parameters.USER_AGENT;
 
 /**
@@ -31,7 +33,7 @@ public final class YahooFinanceClient {
     /**
      * Executes the given Yahoo Finance API request and returns the parsed response.
      *
-     * @param request the Yahoo Finance API request end execute.
+     * @param request the Yahoo Finance API request to execute.
      * @param <T>     the type of the response data.
      * @return an Optional containing the parsed response data, or empty if the request failed or parsing failed.
      */
@@ -56,29 +58,40 @@ public final class YahooFinanceClient {
             url
         );
 
-        HttpResponse response = null;
+        HttpResponse response;
         try {
             response = HttpRequester.builder()
                 .url(url)
                 .headers(headers)
+                .connectionTimeout(REQUEST_TIMEOUT.get().asInteger())
+                .readTimeout(REQUEST_TIMEOUT.get().asInteger())
                 .get();
         } catch (IOException e) {
-            log.error("#{} - Request failed.",
-                YahooMetadata.METADATA.id(),
+            throw new ProviderRequestException(
+                "#%s - Request failed".formatted(YahooMetadata.METADATA.id()),
+                -1,
                 e
             );
         }
 
-        if (response != null) {
-            try {
-                return request.parser().parse(response);
-            } catch (ParseException e) {
-                log.error("#{} - Failed to parse response.",
-                    YahooMetadata.METADATA.id(),
-                    e
-                );
-            }
+        if (!response.isSuccessful()) {
+            int statusCode = response.getStatusCode();
+            response.close();
+            throw new ProviderRequestException(
+                "#%s - Request failed with status code %d".formatted(YahooMetadata.METADATA.id(), statusCode),
+                statusCode,
+                null
+            );
         }
-        return Optional.empty();
+
+        try {
+            return request.parser().parse(response);
+        } catch (ParseException e) {
+            throw new ProviderRequestException(
+                "#%s - Failed to parse response".formatted(YahooMetadata.METADATA.id()),
+                -1,
+                e
+            );
+        }
     }
 }

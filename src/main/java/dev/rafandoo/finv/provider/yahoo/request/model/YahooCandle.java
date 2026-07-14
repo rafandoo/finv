@@ -13,8 +13,9 @@ import java.time.Instant;
  * @param open   the opening price of the candle.
  * @param high   the highest price of the candle.
  * @param low    the lowest price of the candle.
- * @param close  the closing price of the candle.
- * @param volume the trading volume during the period of the candle.
+ * @param close    the closing price of the candle.
+ * @param volume   the trading volume during the period of the candle.
+ * @param adjClose the dividend/split adjusted closing price for the period, or {@code null} when not requested.
  */
 public record YahooCandle(
     Instant date,
@@ -22,7 +23,8 @@ public record YahooCandle(
     BigDecimal high,
     BigDecimal low,
     BigDecimal close,
-    BigInteger volume
+    BigInteger volume,
+    BigDecimal adjClose
 ) {
 
     /**
@@ -38,7 +40,8 @@ public record YahooCandle(
             this.high,
             this.low,
             this.close,
-            this.volume
+            this.volume,
+            this.adjClose
         );
     }
 }

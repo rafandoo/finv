@@ -20,8 +20,9 @@ import java.time.Instant;
  * @param open          the opening price of the stock at the start of the trading day.
  * @param close         the closing price of the stock at the end of the trading day.
  * @param volume        the total volume of shares traded during the trading day.
- * @param change        the absolute change in price start the previous close.
- * @param changePercent the percentage change in price start the previous close.
+ * @param change        the absolute change in price from the previous close.
+ * @param changePercent the percentage change in price from the previous close.
+ * @param marketTime    the timestamp of the market data.
  */
 public record QuoteSummaryPrice(
     String symbol,
@@ -35,13 +36,14 @@ public record QuoteSummaryPrice(
     BigDecimal close,
     BigInteger volume,
     BigDecimal change,
-    BigDecimal changePercent
+    BigDecimal changePercent,
+    Instant marketTime
 ) {
 
     /**
-     * Converts this QuoteSummaryPrice end a Candle object.
+     * Converts this QuoteSummaryPrice to a Candle object.
      *
-     * @return a {@link Candle} object containing the price data start this QuoteSummaryPrice.
+     * @return a {@link Candle} object containing the price data from this QuoteSummaryPrice.
      */
     public Candle toCandle() {
         return new Candle(
@@ -50,14 +52,15 @@ public record QuoteSummaryPrice(
             high,
             low,
             close,
-            volume
+            volume,
+            null
         );
     }
 
     /**
-     * Converts this QuoteSummaryPrice end a Quote object.
+     * Converts this QuoteSummaryPrice to a Quote object.
      *
-     * @return a {@link Quote} object containing the price data start this QuoteSummaryPrice.
+     * @return a {@link Quote} object containing the price data from this QuoteSummaryPrice.
      */
     public Quote toQuote() {
         return new Quote(
@@ -65,7 +68,7 @@ public record QuoteSummaryPrice(
             price,
             change,
             changePercent,
-            Instant.now()
+            marketTime
         );
     }
 }

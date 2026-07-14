@@ -6,6 +6,7 @@ import dev.rafandoo.finv.provider.ResponseParser;
 import dev.rafandoo.finv.provider.yahoo.request.YahooRequestBuilder;
 import dev.rafandoo.finv.provider.yahoo.request.enums.YahooApiVersion;
 import dev.rafandoo.finv.provider.yahoo.request.enums.YahooEvent;
+import dev.rafandoo.finv.provider.yahoo.request.YahooInterval;
 import dev.rafandoo.finv.provider.yahoo.request.enums.YahooHost;
 import dev.rafandoo.finv.provider.yahoo.request.enums.YahooService;
 import dev.rafandoo.finv.provider.yahoo.request.model.ChartAggregate;
@@ -19,17 +20,25 @@ public final class FinanceChartRequest implements YahooRequest<ChartAggregate> {
     private final String symbol;
     private final TimeRange timeRange;
     private final YahooEvent event;
+    private final boolean includeAdjClose;
 
     public FinanceChartRequest(String symbol, TimeRange timeRange) {
-        this.symbol = symbol;
-        this.timeRange = timeRange;
-        this.event = YahooEvent.HISTORY;
+        this(symbol, timeRange, YahooEvent.HISTORY, false);
     }
 
     public FinanceChartRequest(String symbol, TimeRange timeRange, YahooEvent event) {
+        this(symbol, timeRange, event, false);
+    }
+
+    public FinanceChartRequest(String symbol, TimeRange timeRange, boolean includeAdjClose) {
+        this(symbol, timeRange, YahooEvent.HISTORY, includeAdjClose);
+    }
+
+    public FinanceChartRequest(String symbol, TimeRange timeRange, YahooEvent event, boolean includeAdjClose) {
         this.symbol = symbol;
         this.timeRange = timeRange;
         this.event = event;
+        this.includeAdjClose = includeAdjClose;
     }
 
     @Override
@@ -40,15 +49,16 @@ public final class FinanceChartRequest implements YahooRequest<ChartAggregate> {
             .service(YahooService.CHART)
             .symbol(this.symbol)
             .param("formatted", "false")
-            .param("interval", this.timeRange.interval() == null ? "1d" : this.timeRange.interval().getValue())
+            .param("interval", YahooInterval.token(this.timeRange.interval()))
             .param("period1", this.timeRange.start().getEpochSecond())
             .param("period2", this.timeRange.end().getEpochSecond())
             .param("events", this.event.equals(YahooEvent.HISTORY) ? "" : this.event.value())
+            .param("includeAdjustedClose", this.includeAdjClose)
             .create();
     }
 
     @Override
     public ResponseParser<ChartAggregate> parser() {
-        return new FinanceChartParser(this.event);
+        return new FinanceChartParser(this.event, this.includeAdjClose);
     }
 }

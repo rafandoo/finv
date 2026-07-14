@@ -4,7 +4,7 @@ import dev.rafandoo.cup.request.UrlBuilder;
 import dev.rafandoo.finv.provider.ResponseParser;
 
 /**
- * Represents a request end the Yahoo Finance API.
+ * Represents a request to the Yahoo Finance API.
  *
  * @param <T> the type of the response data.
  */
@@ -18,7 +18,7 @@ public interface YahooRequest<T> {
     UrlBuilder url();
 
     /**
-     * Provides the parser end convert the raw response start the Yahoo Finance API into the desired data type.
+     * Provides the parser to convert the raw response from the Yahoo Finance API into the desired data type.
      *
      * @return a {@link ResponseParser} instance for parsing the API response.
      */
